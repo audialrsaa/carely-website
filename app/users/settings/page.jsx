@@ -1,238 +1,261 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { User, Mail, Phone, MapPin, Lock, Edit2, Save, X, Camera } from "lucide-react";
 
 export default function ProfilePage() {
-  const [form, setForm] = useState({
-    full_name: "",
-    email: "",
-    phone: "",
-    address: "",
-  });
-
-  const [password, setPassword] = useState({
-    old_password: "",
-    new_password: "",
-  });
-
+  const [form, setForm] = useState({ full_name: "", email: "", phone: "", address: "" });
+  const [password, setPassword] = useState({ old_password: "", new_password: "" });
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editForm, setEditForm] = useState({ full_name: "", phone: "", address: "" });
 
-  const token =
-    typeof window !== "undefined" ? localStorage.getItem("token") : null;
+  const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
 
-  // =========================
-  // SAFE FETCH (anti HTML error)
-  // =========================
   const safeFetch = async (url, options = {}) => {
     const res = await fetch(url, options);
-
-    const text = await res.text(); // ambil raw dulu
-
+    const text = await res.text();
     let data;
-    try {
-      data = JSON.parse(text);
-    } catch (err) {
-      console.log("❌ BUKAN JSON RESPONSE:", text);
-      throw new Error("Server tidak mengembalikan JSON (cek backend route)");
-    }
-
-    if (!res.ok) {
-      throw new Error(data.message || "Request gagal");
-    }
-
+    try { data = JSON.parse(text); } catch { throw new Error("Server tidak mengembalikan JSON"); }
+    if (!res.ok) throw new Error(data.message || "Request gagal");
     return data;
   };
 
-  // =========================
-  // GET PROFILE
-  // =========================
   const fetchProfile = async () => {
     try {
-      const data = await safeFetch(
-        "http://localhost:5000/api/users/profile",
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      setForm({
-        full_name: data.full_name || "",
-        email: data.email || "",
-        phone: data.phone || "",
-        address: data.address || "",
-      });
-    } catch (err) {
-      setMessage(err.message);
-    }
+      const data = await safeFetch("http://localhost:5000/api/users/profile", { headers: { Authorization: `Bearer ${token}` } });
+      setForm({ full_name: data.full_name || "", email: data.email || "", phone: data.phone || "", address: data.address || "" });
+      setEditForm({ full_name: data.full_name || "", phone: data.phone || "", address: data.address || "" });
+    } catch (err) { setMessage(err.message); }
   };
 
-  useEffect(() => {
-    if (token) fetchProfile();
-  }, [token]);
+  useEffect(() => { if (token) fetchProfile(); }, [token]);
 
-  // =========================
-  // UPDATE PROFILE
-  // =========================
   const handleUpdate = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setMessage("");
-
+    e.preventDefault(); setLoading(true); setMessage("");
     try {
-      await safeFetch("http://localhost:5000/api/users/profile", {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          full_name: form.full_name,
-          phone: form.phone,
-          address: form.address,
-        }),
-      });
-
-      setMessage("✅ Profil berhasil diupdate");
-    } catch (err) {
-      setMessage(err.message);
-    } finally {
-      setLoading(false);
-    }
+      await safeFetch("http://localhost:5000/api/users/profile", { method: "PUT", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }, body: JSON.stringify({ full_name: editForm.full_name, phone: editForm.phone, address: editForm.address }) });
+      setForm({ ...form, full_name: editForm.full_name, phone: editForm.phone, address: editForm.address });
+      setMessage("Profile Berhasil di Update");
+      setIsEditMode(false);
+    } catch (err) { setMessage(err.message); }
+    finally { setLoading(false); }
   };
 
-  // =========================
-  // CHANGE PASSWORD
-  // =========================
   const handleChangePassword = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setMessage("");
-
+    e.preventDefault(); setLoading(true); setMessage("");
     try {
-      await safeFetch(
-        "http://localhost:5000/api/users/change-password",
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(password),
-        }
-      );
-
+      await safeFetch("http://localhost:5000/api/users/change-password", { method: "PUT", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }, body: JSON.stringify(password) });
       setMessage("✅ Password berhasil diubah");
+      setPassword({ old_password: "", new_password: "" });
+    } catch (err) { setMessage(err.message); }
+    finally { setLoading(false); }
+  };
 
-      setPassword({
-        old_password: "",
-        new_password: "",
-      });
-    } catch (err) {
-      setMessage(err.message);
-    } finally {
-      setLoading(false);
-    }
+  const handleCancelEdit = () => {
+    setEditForm({ full_name: form.full_name, phone: form.phone, address: form.address });
+    setIsEditMode(false);
+  };
+
+  const inputStyle = {
+    width: '100%', padding: '12px 16px', borderRadius: 14,
+    border: '1.5px solid rgba(0, 75, 141, 0.2)', background: '#f1f1e6',
+    fontFamily: "'Inter', system-ui, sans-serif", fontSize: 14,
+    transition: 'all 0.2s ease', outline: 'none', boxSizing: 'border-box',
+    color: '#001f3d',
+  };
+
+  const labelStyle = { fontFamily: "'Inter', system-ui, sans-serif", fontSize: 13, fontWeight: 600, color: '#001f3d', display: 'block', marginBottom: 6 };
+
+  const onFocus = (e) => { e.currentTarget.style.borderColor = '#004b8d'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(0, 75, 141, 0.1)'; };
+  const onBlur = (e) => { e.currentTarget.style.borderColor = 'rgba(0, 75, 141, 0.2)'; e.currentTarget.style.boxShadow = 'none'; };
+
+  const profileCardStyle = {
+    background: '#fff', borderRadius: 24,
+    boxShadow: '0 8px 24px rgba(0, 75, 141, 0.08)',
+    border: '1px solid rgba(0, 75, 141, 0.08)',
+    overflow: 'hidden',
+  };
+
+  const infoRowStyle = {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 16,
+    padding: '16px 24px',
+    borderBottom: '1px solid rgba(0, 75, 141, 0.06)',
+  };
+
+  const iconWrapperStyle = {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    background: 'rgba(0, 75, 141, 0.08)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
   };
 
   return (
-    <div className="space-y-8">
-      <h1 className="text-2xl font-bold">Profile & Settings</h1>
-
-      {message && (
-        <div className="p-3 bg-gray-100 rounded text-sm">{message}</div>
-      )}
-
-      {/* ================= PROFILE FORM ================= */}
-      <div className="bg-white p-6 rounded-xl shadow">
-        <h2 className="text-lg font-semibold mb-4">Edit Profil</h2>
-
-        <form onSubmit={handleUpdate} className="space-y-4">
-          <input
-            type="text"
-            placeholder="Nama Lengkap"
-            className="w-full border p-2 rounded"
-            value={form.full_name}
-            onChange={(e) =>
-              setForm({ ...form, full_name: e.target.value })
-            }
-          />
-
-          <input
-            type="email"
-            disabled
-            className="w-full border p-2 rounded bg-gray-100"
-            value={form.email}
-          />
-
-          <input
-            type="text"
-            placeholder="No HP"
-            className="w-full border p-2 rounded"
-            value={form.phone}
-            onChange={(e) =>
-              setForm({ ...form, phone: e.target.value })
-            }
-          />
-
-          <textarea
-            placeholder="Alamat"
-            className="w-full border p-2 rounded"
-            value={form.address}
-            onChange={(e) =>
-              setForm({ ...form, address: e.target.value })
-            }
-          />
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="bg-blue-600 text-white px-4 py-2 rounded"
-          >
-            {loading ? "Menyimpan..." : "Simpan Perubahan"}
-          </button>
-        </form>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 28, maxWidth: 900, margin: '0 auto' }}>
+      {/* Header */}
+      <div>
+        <h1 style={{ fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif", fontSize: 28, fontWeight: 800, color: '#001f3d' }}>Profil Saya</h1>
+        <p style={{ fontFamily: "'Inter', system-ui", fontSize: 14, color: '#3a5068', marginTop: 6 }}>Kelola informasi profil dan keamanan akun Anda</p>
       </div>
 
-      {/* ================= PASSWORD FORM ================= */}
-      <div className="bg-white p-6 rounded-xl shadow">
-        <h2 className="text-lg font-semibold mb-4">Ganti Password</h2>
+      {message && (
+        <div style={{ padding: '12px 18px', background: message.startsWith('✅') ? '#e6f9f4' : '#fff7d6', border: `1px solid ${message.startsWith('✅') ? 'rgba(10,124,92,0.3)' : 'rgba(0,75,141,0.2)'}`, borderRadius: 14, fontSize: 13, color: message.startsWith('✅') ? '#0a7c5c' : '#004b8d', fontFamily: "'Inter', system-ui" }}>
+          {message}
+        </div>
+      )}
 
-        <form onSubmit={handleChangePassword} className="space-y-4">
-          <input
-            type="password"
-            placeholder="Password Lama"
-            className="w-full border p-2 rounded"
-            value={password.old_password}
-            onChange={(e) =>
-              setPassword({
-                ...password,
-                old_password: e.target.value,
-              })
-            }
-          />
+      {/* Profile Card */}
+      <div style={profileCardStyle}>
+        {/* Cover/Header with Avatar */}
+        <div style={{ background: 'linear-gradient(135deg, #004b8d 0%, #43acff 100%)', padding: '32px 32px 24px 32px', position: 'relative' }}>
+          <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', flexWrap: 'wrap', gap: 20 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 24, flexWrap: 'wrap' }}>
+              <div style={{ position: 'relative' }}>
+                <div style={{ width: 100, height: 100, background: '#fff', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 16px rgba(0,0,0,0.15)' }}>
+                  <span style={{ fontSize: 48, fontWeight: 700, color: '#004b8d', fontFamily: "'Plus Jakarta Sans', system-ui" }}>
+                    {form.full_name ? form.full_name.charAt(0).toUpperCase() : 'U'}
+                  </span>
+                </div>
+                <div style={{ position: 'absolute', bottom: 4, right: 4, background: '#fff', borderRadius: '50%', padding: 6, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
+                  <Camera size={18} color="#004b8d" />
+                </div>
+              </div>
+              <div>
+                <h2 style={{ fontFamily: "'Plus Jakarta Sans', system-ui", fontSize: 24, fontWeight: 700, color: '#fff', marginBottom: 6 }}>{form.full_name || "Pengguna"}</h2>
+              </div>
+            </div>
+            {!isEditMode && (
+              <button
+                onClick={() => setIsEditMode(true)}
+                style={{ background: '#fff', border: 'none', borderRadius: 40, padding: '10px 24px', fontFamily: "'Inter', system-ui", fontWeight: 600, fontSize: 14, color: '#004b8d', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, transition: 'all 0.2s', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}
+                onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)'; }}
+              >
+                <Edit2 size={16} /> Edit Profil
+              </button>
+            )}
+          </div>
+        </div>
 
-          <input
-            type="password"
-            placeholder="Password Baru"
-            className="w-full border p-2 rounded"
-            value={password.new_password}
-            onChange={(e) =>
-              setPassword({
-                ...password,
-                new_password: e.target.value,
-              })
-            }
-          />
+        {/* Profile Info */}
+        <div style={{ padding: '24px 32px 32px 32px' }}>
+          {!isEditMode ? (
+            // View Mode
+            <div>
+              <div style={infoRowStyle}>
+                <div style={iconWrapperStyle}><User size={22} color="#004b8d" /></div>
+                <div style={{ flex: 1 }}>
+                  <p style={{ fontSize: 12, color: '#6c7a8e', marginBottom: 4, fontFamily: "'Inter', system-ui" }}>Nama Lengkap</p>
+                  <p style={{ fontSize: 16, fontWeight: 500, color: '#001f3d', fontFamily: "'Inter', system-ui" }}>{form.full_name || "Belum diisi"}</p>
+                </div>
+              </div>
+              <div style={infoRowStyle}>
+                <div style={iconWrapperStyle}><Mail size={22} color="#004b8d" /></div>
+                <div style={{ flex: 1 }}>
+                  <p style={{ fontSize: 12, color: '#6c7a8e', marginBottom: 4, fontFamily: "'Inter', system-ui" }}>Email</p>
+                  <p style={{ fontSize: 16, fontWeight: 500, color: '#001f3d', fontFamily: "'Inter', system-ui" }}>{form.email || "Belum diisi"}</p>
+                </div>
+              </div>
+              <div style={infoRowStyle}>
+                <div style={iconWrapperStyle}><Phone size={22} color="#004b8d" /></div>
+                <div style={{ flex: 1 }}>
+                  <p style={{ fontSize: 12, color: '#6c7a8e', marginBottom: 4, fontFamily: "'Inter', system-ui" }}>No Handphone</p>
+                  <p style={{ fontSize: 16, fontWeight: 500, color: '#001f3d', fontFamily: "'Inter', system-ui" }}>{form.phone || "Belum diisi"}</p>
+                </div>
+              </div>
+              <div style={{ ...infoRowStyle, borderBottom: 'none' }}>
+                <div style={iconWrapperStyle}><MapPin size={22} color="#004b8d" /></div>
+                <div style={{ flex: 1 }}>
+                  <p style={{ fontSize: 12, color: '#6c7a8e', marginBottom: 4, fontFamily: "'Inter', system-ui" }}>Alamat</p>
+                  <p style={{ fontSize: 16, fontWeight: 500, color: '#001f3d', fontFamily: "'Inter', system-ui" }}>{form.address || "Belum diisi"}</p>
+                </div>
+              </div>
+            </div>
+          ) : (
+            // Edit Mode
+            <form onSubmit={handleUpdate}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+                <div>
+                  <label style={labelStyle}>Nama Lengkap</label>
+                  <input
+                    type="text"
+                    style={inputStyle}
+                    value={editForm.full_name}
+                    onChange={(e) => setEditForm({ ...editForm, full_name: e.target.value })}
+                    onFocus={onFocus}
+                    onBlur={onBlur}
+                    placeholder="Masukkan nama lengkap"
+                  />
+                </div>
+                <div>
+                  <label style={labelStyle}>No Handphone</label>
+                  <input
+                    type="text"
+                    style={inputStyle}
+                    value={editForm.phone}
+                    onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
+                    onFocus={onFocus}
+                    onBlur={onBlur}
+                    placeholder="Masukkan nomor handphone"
+                  />
+                </div>
+                <div>
+                  <label style={labelStyle}>Alamat</label>
+                  <textarea
+                    style={{ ...inputStyle, minHeight: 80, resize: 'vertical' }}
+                    value={editForm.address}
+                    onChange={(e) => setEditForm({ ...editForm, address: e.target.value })}
+                    onFocus={onFocus}
+                    onBlur={onBlur}
+                    placeholder="Masukkan alamat lengkap"
+                  />
+                </div>
+                <div style={{ display: 'flex', gap: 12, marginTop: 8 }}>
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    style={{ background: '#004b8d', color: '#fff', border: 'none', borderRadius: 40, padding: '10px 24px', fontFamily: "'Inter', system-ui", fontWeight: 600, fontSize: 14, cursor: loading ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}
+                  >
+                    <Save size={16} /> {loading ? "Menyimpan..." : "Simpan"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleCancelEdit}
+                    style={{ background: '#f1f1e6', color: '#3a5068', border: 'none', borderRadius: 40, padding: '10px 24px', fontFamily: "'Inter', system-ui", fontWeight: 600, fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}
+                  >
+                    <X size={16} /> Batal
+                  </button>
+                </div>
+              </div>
+            </form>
+          )}
+        </div>
+      </div>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="bg-red-600 text-white px-4 py-2 rounded"
-          >
-            {loading ? "Memproses..." : "Ganti Password"}
+      {/* Change Password Section */}
+      <div style={{ background: '#fff', borderRadius: 24, padding: 28, boxShadow: '0 8px 24px rgba(0, 75, 141, 0.08)', border: '1px solid rgba(0, 75, 141, 0.08)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24, paddingBottom: 16, borderBottom: '1px solid rgba(0, 75, 141, 0.08)' }}>
+          <Lock size={22} color="#004b8d" />
+          <h2 style={{ fontFamily: "'Plus Jakarta Sans', system-ui", fontSize: 20, fontWeight: 700, color: '#001f3d' }}>Ganti Password</h2>
+        </div>
+        <form onSubmit={handleChangePassword} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+          <div>
+            <label style={labelStyle}>Password Lama</label>
+            <input type="password" placeholder="Masukkan password lama" style={inputStyle} value={password.old_password} onChange={(e) => setPassword({ ...password, old_password: e.target.value })} onFocus={onFocus} onBlur={onBlur} />
+          </div>
+          <div>
+            <label style={labelStyle}>Password Baru</label>
+            <input type="password" placeholder="Masukkan password baru" style={inputStyle} value={password.new_password} onChange={(e) => setPassword({ ...password, new_password: e.target.value })} onFocus={onFocus} onBlur={onBlur} />
+          </div>
+          <button type="submit" disabled={loading}
+            style={{ background: '#004b8d', color: '#fff', border: 'none', borderRadius: 40, padding: '12px 28px', fontFamily: "'Inter', system-ui", fontWeight: 600, fontSize: 14, cursor: loading ? 'not-allowed' : 'pointer', transition: 'all 0.2s', alignSelf: 'flex-start' }}>
+            {loading ? "Memproses..." : "Update Password"}
           </button>
         </form>
       </div>

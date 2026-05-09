@@ -25,33 +25,53 @@ export default function SidebarUser() {
   };
 
   return (
-    <aside className="w-64 min-h-screen bg-white border-r border-gray-100 flex flex-col shrink-0">
+    <aside style={{
+      width: 256,
+      minHeight: '100vh',
+      background: '#fff',
+      borderRight: '1px solid rgba(0, 75, 141, 0.08)',
+      display: 'flex',
+      flexDirection: 'column',
+      flexShrink: 0,
+    }}>
       {/* Logo */}
-      <div className="p-6 border-b border-gray-100">
-        <div className="flex items-center gap-2">
-          <div className="w-9 h-9 rounded-lg bg-gradient-to-r from-teal-500 to-orange-400 flex items-center justify-center">
-            <Heart className="w-5 h-5 text-white" />
+      <div style={{ padding: 24, borderBottom: '1px solid rgba(0, 75, 141, 0.08)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{
+            width: 36, height: 36, borderRadius: 10,
+            background: 'linear-gradient(135deg, #004b8d, #43acff)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            boxShadow: '0 4px 10px rgba(0, 75, 141, 0.25)',
+          }}>
+            <Heart size={18} color="white" />
           </div>
           <div>
-            <h1 className="font-bold text-navy-700">Carely</h1>
-            <p className="text-[10px] text-slate-400">Your Safe Space to Speak</p>
+            <h1 style={{ fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif", fontWeight: 700, fontSize: 15, color: '#001f3d', margin: 0 }}>Carely</h1>
+            <p style={{ fontFamily: "'Inter', system-ui, sans-serif", fontSize: 10, color: '#3a5068', margin: 0 }}>Your Safe Space to Speak</p>
           </div>
         </div>
       </div>
 
       {/* Menu */}
-      <nav className="flex-1 p-4 space-y-1">
+      <nav style={{ flex: 1, padding: 16, display: 'flex', flexDirection: 'column', gap: 4 }}>
         {menuItems.map((item) => {
           const active = pathname === item.href;
           const Icon = item.icon;
           return (
-            <Link key={item.href} href={item.href}>
+            <Link key={item.href} href={item.href} style={{ textDecoration: 'none' }}>
               <div
-                className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition cursor-pointer ${
-                  active
-                    ? "bg-teal-50 text-teal-500 font-medium"
-                    : "text-slate-500 hover:bg-gray-50"
-                }`}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 12,
+                  padding: '10px 14px', borderRadius: 12, fontSize: 14,
+                  fontFamily: "'Inter', system-ui, sans-serif",
+                  fontWeight: active ? 600 : 400,
+                  cursor: 'pointer', transition: 'all 0.2s',
+                  background: active ? '#f1f1e6' : 'transparent',
+                  color: active ? '#004b8d' : '#3a5068',
+                  borderLeft: active ? '3px solid #004b8d' : '3px solid transparent',
+                }}
+                onMouseEnter={(e) => { if (!active) { e.currentTarget.style.background = '#f1f1e6'; e.currentTarget.style.color = '#004b8d'; } }}
+                onMouseLeave={(e) => { if (!active) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#3a5068'; } }}
               >
                 <Icon size={18} />
                 <span>{item.label}</span>
@@ -62,10 +82,18 @@ export default function SidebarUser() {
       </nav>
 
       {/* Logout */}
-      <div className="p-4 border-t border-gray-100">
+      <div style={{ padding: 16, borderTop: '1px solid rgba(0, 75, 141, 0.08)' }}>
         <button
           onClick={handleLogout}
-          className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-red-500 hover:bg-red-50 transition"
+          style={{
+            width: '100%', display: 'flex', alignItems: 'center', gap: 12,
+            padding: '10px 14px', borderRadius: 12, border: 'none',
+            background: 'transparent', cursor: 'pointer', fontSize: 14,
+            fontFamily: "'Inter', system-ui, sans-serif", fontWeight: 500,
+            color: '#004b8d', transition: 'all 0.2s',
+          }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = '#fff7d6'; e.currentTarget.style.color = '#004b8d'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#004b8d'; }}
         >
           <LogOut size={18} />
           Keluar
