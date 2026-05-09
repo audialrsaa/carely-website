@@ -1,44 +1,19 @@
-// ======================================================
-// components/UserSidebar.jsx
-// SIDEBAR USER TERPISAH (PAKAI DI SEMUA PAGE USER)
-// ======================================================
+// components/sidebarUser.jsx
 "use client";
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import {
-  LayoutDashboard,
-  AlertCircle,
-  FileText,
-  Settings,
-  LogOut,
-} from "lucide-react";
+import { LayoutDashboard, AlertCircle, FileText, Settings, LogOut, Heart } from "lucide-react";
 
-export default function UserSidebar() {
+export default function SidebarUser() {
   const pathname = usePathname();
   const router = useRouter();
 
   const menuItems = [
-    {
-      label: "Dashboard",
-      href: "/users",
-      icon: <LayoutDashboard size={20} />,
-    },
-    {
-      label: "Kasus Aktif",
-      href: "/users/kasus-aktif",
-      icon: <AlertCircle size={20} />,
-    },
-    {
-      label: "Riwayat Laporan",
-      href: "/users/history",
-      icon: <FileText size={20} />,
-    },
-    {
-      label: "Pengaturan",
-      href: "/users/settings",
-      icon: <Settings size={20} />,
-    },
+    { label: "Dashboard", href: "/users", icon: LayoutDashboard },
+    { label: "Kasus Aktif", href: "/users/kasus-aktif", icon: AlertCircle },
+    { label: "Riwayat Laporan", href: "/users/history", icon: FileText },
+    { label: "Pengaturan", href: "/users/settings", icon: Settings },
   ];
 
   const handleLogout = () => {
@@ -46,38 +21,40 @@ export default function UserSidebar() {
     localStorage.removeItem("user");
     sessionStorage.removeItem("token");
     sessionStorage.removeItem("user");
-
     router.push("/login");
   };
 
   return (
-    <aside className="w-72 min-h-screen bg-white border-r shadow-sm rounded-r-3xl p-8 flex flex-col sticky top-0">
+    <aside className="w-64 min-h-screen bg-white border-r border-gray-100 flex flex-col shrink-0">
       {/* Logo */}
-      <div className="mb-12">
-        <h1 className="text-3xl font-bold text-teal-500">
-          Care for Her
-        </h1>
-        <p className="text-gray-500 text-sm mt-2">
-          Ruang aman & dukungan
-        </p>
+      <div className="p-6 border-b border-gray-100">
+        <div className="flex items-center gap-2">
+          <div className="w-9 h-9 rounded-lg bg-gradient-to-r from-teal-500 to-orange-400 flex items-center justify-center">
+            <Heart className="w-5 h-5 text-white" />
+          </div>
+          <div>
+            <h1 className="font-bold text-navy-700">Carely</h1>
+            <p className="text-[10px] text-slate-400">Your Safe Space to Speak</p>
+          </div>
+        </div>
       </div>
 
       {/* Menu */}
-      <nav className="space-y-3 flex-1">
+      <nav className="flex-1 p-4 space-y-1">
         {menuItems.map((item) => {
           const active = pathname === item.href;
-
+          const Icon = item.icon;
           return (
             <Link key={item.href} href={item.href}>
               <div
-                className={`w-full flex items-center gap-4 px-4 py-4 rounded-2xl font-medium transition-all cursor-pointer ${
+                className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition cursor-pointer ${
                   active
-                    ? "bg-teal-50 text-teal-600 shadow-sm"
-                    : "text-gray-600 hover:bg-gray-100"
+                    ? "bg-teal-50 text-teal-500 font-medium"
+                    : "text-slate-500 hover:bg-gray-50"
                 }`}
               >
-                {item.icon}
-                {item.label}
+                <Icon size={18} />
+                <span>{item.label}</span>
               </div>
             </Link>
           );
@@ -85,13 +62,15 @@ export default function UserSidebar() {
       </nav>
 
       {/* Logout */}
-      <button
-        onClick={handleLogout}
-        className="w-full flex items-center gap-4 px-4 py-4 rounded-2xl text-red-500 hover:bg-red-50 transition-all font-medium"
-      >
-        <LogOut size={20} />
-        Keluar
-      </button>
+      <div className="p-4 border-t border-gray-100">
+        <button
+          onClick={handleLogout}
+          className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-red-500 hover:bg-red-50 transition"
+        >
+          <LogOut size={18} />
+          Keluar
+        </button>
+      </div>
     </aside>
   );
 }

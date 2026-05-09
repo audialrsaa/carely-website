@@ -15,9 +15,8 @@ export default function Navbar() {
   const navLinks = [
     { label: 'Beranda', href: '#beranda' },
     { label: 'Layanan', href: '#layanan' },
-    { label: 'Edukasi', href: '#edukasi' },
-    { label: 'Testimoni', href: '#testimoni' },
-    { label: 'Tentang', href: '#tentang' },
+    { label: 'Alur', href: '#proses' },
+    { label: 'Edukasi', href: '#edukasi' }
   ];
 
   return (
@@ -33,7 +32,7 @@ export default function Navbar() {
         background: scrolled ? '#ffffff' : 'rgba(255, 255, 255, 0.98)',
         backdropFilter: 'blur(16px)',
         borderRadius: 80,
-        border: '1px solid rgba(42, 157, 143, 0.2)',
+        border: '1px solid rgba(0, 75, 141, 0.2)',
         boxShadow: scrolled ? '0 8px 32px rgba(0, 0, 0, 0.05)' : '0 4px 20px rgba(0, 0, 0, 0.02)',
         transition: 'all 0.3s ease',
         padding: '0 28px',
@@ -50,11 +49,11 @@ export default function Navbar() {
               width: 36,
               height: 36,
               borderRadius: 12,
-              background: 'linear-gradient(135deg, #2A9D8F, #F4A261)',
+              background: 'linear-gradient(135deg, #004b8d, #43acff)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              boxShadow: '0 4px 12px rgba(42, 157, 143, 0.25)',
+              boxShadow: '0 4px 12px rgba(0, 75, 141, 0.25)',
             }}
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
@@ -67,10 +66,10 @@ export default function Navbar() {
               fontWeight: 700,
               fontSize: 18,
               letterSpacing: '-0.3px',
-              color: '#264653',
+              color: '#004b8d',
             }}
           >
-            Care for Her
+            Carely
           </span>
         </div>
       </Link>
@@ -82,7 +81,7 @@ export default function Navbar() {
             href={link.href}
             style={{
               textDecoration: 'none',
-              color: '#2C3E50',
+              color: '#1a2e44',
               fontFamily: "'Inter', system-ui, sans-serif",
               fontWeight: 500,
               fontSize: 14,
@@ -91,12 +90,12 @@ export default function Navbar() {
               transition: 'all 0.2s ease',
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.background = '#E9F5F3';
-              e.currentTarget.style.color = '#2A9D8F';
+              e.currentTarget.style.background = '#f1f1e6';
+              e.currentTarget.style.color = '#004b8d';
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.background = 'transparent';
-              e.currentTarget.style.color = '#2C3E50';
+              e.currentTarget.style.color = '#1a2e44';
             }}
           >
             {link.label}
@@ -107,7 +106,7 @@ export default function Navbar() {
       <Link href="/login">
         <button
           style={{
-            background: '#2A9D8F',
+            background: '#004b8d',
             color: '#fff',
             border: 'none',
             borderRadius: 40,
@@ -117,17 +116,17 @@ export default function Navbar() {
             fontSize: 14,
             cursor: 'pointer',
             transition: 'all 0.2s ease',
-            boxShadow: '0 2px 8px rgba(42, 157, 143, 0.3)',
+            boxShadow: '0 2px 8px rgba(0, 75, 141, 0.3)',
           }}
           onMouseEnter={(e) => {
             e.currentTarget.style.transform = 'translateY(-2px)';
-            e.currentTarget.style.background = '#F4A261';
-            e.currentTarget.style.boxShadow = '0 6px 16px rgba(244, 162, 97, 0.35)';
+            e.currentTarget.style.background = '#43acff';
+            e.currentTarget.style.boxShadow = '0 6px 16px rgba(67, 172, 255, 0.35)';
           }}
           onMouseLeave={(e) => {
             e.currentTarget.style.transform = 'translateY(0)';
-            e.currentTarget.style.background = '#2A9D8F';
-            e.currentTarget.style.boxShadow = '0 2px 8px rgba(42, 157, 143, 0.3)';
+            e.currentTarget.style.background = '#004b8d';
+            e.currentTarget.style.boxShadow = '0 2px 8px rgba(0, 75, 141, 0.3)';
           }}
         >
           Akses Akun

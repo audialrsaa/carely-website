@@ -193,7 +193,7 @@ export default function RegisterPage() {
                 color: '#264653',
               }}
             >
-              Care for Her
+              Carely
             </span>
           </div>
         </Link>

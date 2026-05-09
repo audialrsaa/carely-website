@@ -237,7 +237,7 @@ const handleSubmit = async (e) => {
                 color: '#264653',
               }}
             >
-              Care for Her
+              Carely
             </span>
           </div>
         </Link>

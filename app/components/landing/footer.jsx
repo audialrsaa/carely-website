@@ -4,7 +4,7 @@ export default function Footer() {
   return (
     <footer
       style={{
-        background: '#264653',
+        background: '#001f3d',
         padding: '80px 40px 32px',
         position: 'relative',
         overflow: 'hidden',
@@ -17,7 +17,7 @@ export default function Footer() {
           left: 0,
           right: 0,
           height: 70,
-          background: '#264653',
+          background: '#001f3d',
           borderRadius: '50% 50% 0 0 / 100% 100% 0 0',
         }}
       />
@@ -40,7 +40,7 @@ export default function Footer() {
                   width: 42,
                   height: 42,
                   borderRadius: '14px',
-                  background: 'linear-gradient(135deg, #2A9D8F, #F4A261)',
+                  background: 'linear-gradient(135deg, #004b8d, #43acff)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -58,7 +58,7 @@ export default function Footer() {
                   color: '#fff',
                 }}
               >
-                Care for Her
+                Carely
               </span>
             </div>
             <p
@@ -107,7 +107,7 @@ export default function Footer() {
                       transition: 'all 0.2s ease',
                     }}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.color = '#F4A261';
+                      e.currentTarget.style.color = '#43acff';
                       e.currentTarget.style.transform = 'translateX(4px)';
                     }}
                     onMouseLeave={(e) => {

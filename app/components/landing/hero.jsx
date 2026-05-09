@@ -25,7 +25,7 @@ export default function Hero() {
           width: 500,
           height: 500,
           borderRadius: '40% 60% 50% 50% / 45% 50% 50% 55%',
-          background: 'radial-gradient(circle, rgba(42,157,143,0.05) 0%, transparent 70%)',
+          background: 'radial-gradient(circle, rgba(0,75,141,0.05) 0%, transparent 70%)',
           pointerEvents: 'none',
         }}
       />
@@ -37,7 +37,7 @@ export default function Hero() {
           width: 400,
           height: 400,
           borderRadius: '50% 50% 35% 65% / 55% 40% 60% 45%',
-          background: 'radial-gradient(circle, rgba(244,162,97,0.04) 0%, transparent 70%)',
+          background: 'radial-gradient(circle, rgba(67,172,255,0.06) 0%, transparent 70%)',
           pointerEvents: 'none',
         }}
       />
@@ -61,7 +61,7 @@ export default function Hero() {
               display: 'inline-flex',
               alignItems: 'center',
               gap: 8,
-              background: '#E9F5F3',
+              background: '#f1f1e6',
               borderRadius: 40,
               padding: '6px 18px 6px 12px',
               marginBottom: 28,
@@ -72,7 +72,7 @@ export default function Hero() {
                 width: 8,
                 height: 8,
                 borderRadius: '50%',
-                background: '#2A9D8F',
+                background: '#004b8d',
               }}
             />
             <span
@@ -80,7 +80,7 @@ export default function Hero() {
                 fontFamily: "'Inter', system-ui, sans-serif",
                 fontSize: 13,
                 fontWeight: 500,
-                color: '#2A9D8F',
+                color: '#004b8d',
               }}
             >
               Platform Perlindungan Terpercaya
@@ -93,17 +93,17 @@ export default function Hero() {
               fontSize: 'clamp(42px, 5.5vw, 64px)',
               fontWeight: 800,
               lineHeight: 1.15,
-              color: '#264653',
+              color: '#001f3d',
               marginBottom: 24,
               letterSpacing: '-1.5px',
             }}
           >
             Saat Dunia Terlalu{' '}
-            <span style={{ color: '#2A9D8F' }}>Diam</span>,
+            <span style={{ color: '#004b8d' }}>Diam</span>,
             <br />
             <span
               style={{
-                background: 'linear-gradient(135deg, #2A9D8F, #F4A261)',
+                background: 'linear-gradient(135deg, #004b8d, #43acff)',
                 backgroundClip: 'text',
                 WebkitBackgroundClip: 'text',
                 color: 'transparent',
@@ -119,12 +119,12 @@ export default function Hero() {
               fontFamily: "'Inter', system-ui, sans-serif",
               fontSize: 16,
               lineHeight: 1.75,
-              color: '#4A5B6A',
+              color: '#3a5068',
               marginBottom: 40,
               maxWidth: 520,
             }}
           >
-            Care for Her & Child adalah ruang aman bagi perempuan dan anak untuk
+            Carely adalah ruang aman bagi perempuan dan anak untuk
             melaporkan kekerasan, pelecehan, atau ancaman. Privasi terlindungi,
             laporan ditindaklanjuti dengan empati dan profesionalisme.
           </p>
@@ -133,7 +133,7 @@ export default function Hero() {
             <Link href="/register">
               <button
                 style={{
-                  background: '#2A9D8F',
+                  background: '#004b8d',
                   color: '#fff',
                   border: 'none',
                   borderRadius: 60,
@@ -143,20 +143,20 @@ export default function Hero() {
                   fontSize: 15,
                   cursor: 'pointer',
                   transition: 'all 0.3s ease',
-                  boxShadow: '0 4px 14px rgba(42, 157, 143, 0.35)',
+                  boxShadow: '0 4px 14px rgba(0, 75, 141, 0.35)',
                   display: 'flex',
                   alignItems: 'center',
                   gap: 10,
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.transform = 'translateY(-3px)';
-                  e.currentTarget.style.background = '#F4A261';
-                  e.currentTarget.style.boxShadow = '0 12px 28px rgba(244, 162, 97, 0.45)';
+                  e.currentTarget.style.background = '#43acff';
+                  e.currentTarget.style.boxShadow = '0 12px 28px rgba(67, 172, 255, 0.45)';
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.background = '#2A9D8F';
-                  e.currentTarget.style.boxShadow = '0 4px 14px rgba(42, 157, 143, 0.35)';
+                  e.currentTarget.style.background = '#004b8d';
+                  e.currentTarget.style.boxShadow = '0 4px 14px rgba(0, 75, 141, 0.35)';
                 }}
               >
                 Buat Laporan
@@ -169,8 +169,8 @@ export default function Hero() {
               <button
                 style={{
                   background: 'transparent',
-                  color: '#2A9D8F',
-                  border: '1.5px solid rgba(42, 157, 143, 0.4)',
+                  color: '#004b8d',
+                  border: '1.5px solid rgba(0, 75, 141, 0.4)',
                   borderRadius: 60,
                   padding: '14px 34px',
                   fontFamily: "'Inter', system-ui, sans-serif",
@@ -180,13 +180,13 @@ export default function Hero() {
                   transition: 'all 0.3s ease',
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'rgba(42, 157, 143, 0.05)';
-                  e.currentTarget.style.borderColor = '#2A9D8F';
+                  e.currentTarget.style.background = 'rgba(0, 75, 141, 0.05)';
+                  e.currentTarget.style.borderColor = '#004b8d';
                   e.currentTarget.style.transform = 'translateY(-2px)';
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.background = 'transparent';
-                  e.currentTarget.style.borderColor = 'rgba(42, 157, 143, 0.4)';
+                  e.currentTarget.style.borderColor = 'rgba(0, 75, 141, 0.4)';
                   e.currentTarget.style.transform = 'translateY(0)';
                 }}
               >
@@ -195,14 +195,13 @@ export default function Hero() {
             </a>
           </div>
 
-          {/* Statistics - KONTEN ASLI TETAP */}
           <div
             style={{
               display: 'flex',
               gap: 48,
               marginTop: 56,
               paddingTop: 32,
-              borderTop: '1px solid #E0E8ED',
+              borderTop: '1px solid #e0e8f0',
               flexWrap: 'wrap',
             }}
           >
@@ -212,7 +211,7 @@ export default function Hero() {
                   fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif",
                   fontSize: 28,
                   fontWeight: 800,
-                  color: '#2A9D8F',
+                  color: '#004b8d',
                   marginBottom: 6,
                 }}
               >
@@ -222,7 +221,7 @@ export default function Hero() {
                 style={{
                   fontFamily: "'Inter', system-ui, sans-serif",
                   fontSize: 13,
-                  color: '#5D7180',
+                  color: '#3a5068',
                 }}
               >
                 Klien Terbantu
@@ -234,7 +233,7 @@ export default function Hero() {
                   fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif",
                   fontSize: 28,
                   fontWeight: 800,
-                  color: '#2A9D8F',
+                  color: '#004b8d',
                   marginBottom: 6,
                 }}
               >
@@ -244,7 +243,7 @@ export default function Hero() {
                 style={{
                   fontFamily: "'Inter', system-ui, sans-serif",
                   fontSize: 13,
-                  color: '#5D7180',
+                  color: '#3a5068',
                 }}
               >
                 Privasi Terjaga
@@ -256,7 +255,7 @@ export default function Hero() {
                   fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif",
                   fontSize: 28,
                   fontWeight: 800,
-                  color: '#2A9D8F',
+                  color: '#004b8d',
                   marginBottom: 6,
                 }}
               >
@@ -266,7 +265,7 @@ export default function Hero() {
                 style={{
                   fontFamily: "'Inter', system-ui, sans-serif",
                   fontSize: 13,
-                  color: '#5D7180',
+                  color: '#3a5068',
                 }}
               >
                 Layanan Aktif
@@ -289,10 +288,10 @@ export default function Hero() {
               maxWidth: 460,
               aspectRatio: '1/1',
               borderRadius: '32px 64px 32px 64px',
-              background: '#F0F6F4',
+              background: '#f1f1e6',
               position: 'relative',
               overflow: 'hidden',
-              boxShadow: '0 30px 50px rgba(42, 157, 143, 0.1)',
+              boxShadow: '0 30px 50px rgba(0, 75, 141, 0.1)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -307,7 +306,7 @@ export default function Hero() {
                 width: 280,
                 height: 280,
                 borderRadius: '50%',
-                border: '1.5px dashed rgba(42, 157, 143, 0.2)',
+                border: '1.5px dashed rgba(0, 75, 141, 0.2)',
                 animation: 'spin 20s linear infinite',
                 pointerEvents: 'none',
               }}
@@ -321,7 +320,7 @@ export default function Hero() {
                 width: 340,
                 height: 340,
                 borderRadius: '50%',
-                border: '1px solid rgba(42, 157, 143, 0.08)',
+                border: '1px solid rgba(0, 75, 141, 0.08)',
                 pointerEvents: 'none',
               }}
             />
@@ -360,7 +359,7 @@ export default function Hero() {
                 width: 8,
                 height: 8,
                 borderRadius: '50%',
-                background: '#F4A261',
+                background: '#43acff',
               }}
             />
             <span
@@ -368,7 +367,7 @@ export default function Hero() {
                 fontSize: 13,
                 fontWeight: 600,
                 fontFamily: "'Inter', system-ui",
-                color: '#264653',
+                color: '#001f3d',
               }}
             >
               #BeraniBersuara

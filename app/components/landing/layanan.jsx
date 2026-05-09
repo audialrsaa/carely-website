@@ -63,7 +63,7 @@ export default function Layanan() {
     <section
       id="layanan"
       style={{
-        background: '#F8FBF9',
+        background: '#f1f1e6',
         padding: '100px 40px',
         position: 'relative',
         overflow: 'hidden',
@@ -77,7 +77,7 @@ export default function Layanan() {
           width: 400,
           height: 400,
           borderRadius: '70% 30% 60% 40% / 40% 50% 50% 60%',
-          background: 'rgba(42, 157, 143, 0.03)',
+          background: 'rgba(0, 75, 141, 0.03)',
           pointerEvents: 'none',
         }}
       />
@@ -89,10 +89,10 @@ export default function Layanan() {
               fontFamily: "'Inter', system-ui, sans-serif",
               fontSize: 13,
               fontWeight: 600,
-              color: '#2A9D8F',
+              color: '#004b8d',
               letterSpacing: '1.5px',
               textTransform: 'uppercase',
-              background: '#E9F5F3',
+              background: '#fff7d6',
               padding: '4px 16px',
               borderRadius: 40,
               display: 'inline-block',
@@ -105,20 +105,20 @@ export default function Layanan() {
               fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif",
               fontSize: 'clamp(32px, 4vw, 44px)',
               fontWeight: 700,
-              color: '#264653',
+              color: '#001f3d',
               marginTop: 20,
               marginBottom: 16,
               letterSpacing: '-0.8px',
             }}
           >
             Solusi Lengkap{' '}
-            <span style={{ color: '#F4A261' }}>Perlindungan</span> untuk Anda
+            <span style={{ color: '#43acff' }}>Perlindungan</span> untuk Anda
           </h2>
           <p
             style={{
               fontFamily: "'Inter', system-ui, sans-serif",
               fontSize: 16,
-              color: '#5D7180',
+              color: '#3a5068',
               maxWidth: 540,
               margin: '0 auto',
               lineHeight: 1.7,
@@ -141,25 +141,23 @@ export default function Layanan() {
               key={s.title}
               style={{
                 background: '#FFFFFF',
-                border: '1px solid rgba(42, 157, 143, 0.1)',
+                border: '1px solid rgba(0, 75, 141, 0.1)',
                 borderRadius: '32px 16px 32px 16px',
                 padding: '40px 28px',
                 transition: 'all 0.35s cubic-bezier(0.2, 0, 0, 1)',
                 boxShadow: '0 8px 20px rgba(0, 0, 0, 0.02)',
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.background = '#FFFFFF';
                 e.currentTarget.style.transform = 'translateY(-8px)';
                 e.currentTarget.style.borderRadius = '16px 32px 16px 32px';
-                e.currentTarget.style.boxShadow = '0 25px 40px rgba(42, 157, 143, 0.1)';
-                e.currentTarget.style.borderColor = 'rgba(42, 157, 143, 0.2)';
+                e.currentTarget.style.boxShadow = '0 25px 40px rgba(0, 75, 141, 0.1)';
+                e.currentTarget.style.borderColor = 'rgba(0, 75, 141, 0.2)';
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.background = '#FFFFFF';
                 e.currentTarget.style.transform = 'translateY(0)';
                 e.currentTarget.style.borderRadius = '32px 16px 32px 16px';
                 e.currentTarget.style.boxShadow = '0 8px 20px rgba(0, 0, 0, 0.02)';
-                e.currentTarget.style.borderColor = 'rgba(42, 157, 143, 0.1)';
+                e.currentTarget.style.borderColor = 'rgba(0, 75, 141, 0.1)';
               }}
             >
               <div
@@ -167,12 +165,12 @@ export default function Layanan() {
                   width: 64,
                   height: 64,
                   borderRadius: '20px',
-                  background: 'linear-gradient(135deg, #2A9D8F, #F4A261)',
+                  background: 'linear-gradient(135deg, #004b8d, #43acff)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   marginBottom: 28,
-                  boxShadow: '0 12px 24px rgba(42, 157, 143, 0.2)',
+                  boxShadow: '0 12px 24px rgba(0, 75, 141, 0.2)',
                 }}
               >
                 {s.icon}
@@ -182,7 +180,7 @@ export default function Layanan() {
                   fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif",
                   fontSize: 20,
                   fontWeight: 700,
-                  color: '#264653',
+                  color: '#001f3d',
                   marginBottom: 12,
                 }}
               >
@@ -193,7 +191,7 @@ export default function Layanan() {
                   fontFamily: "'Inter', system-ui, sans-serif",
                   fontSize: 14,
                   lineHeight: 1.7,
-                  color: '#5D7180',
+                  color: '#3a5068',
                 }}
               >
                 {s.desc}

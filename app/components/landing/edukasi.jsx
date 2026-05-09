@@ -5,22 +5,22 @@ const articles = [
     tag: 'Hak Hukum',
     title: 'Memahami Hak Korban Kekerasan di Indonesia',
     desc: 'Undang-undang memberikan perlindungan khusus bagi perempuan dan anak. Pelajari hak-hak dasar yang wajib Anda ketahui.',
-    color: '#2A9D8F',
-    bgGradient: 'linear-gradient(135deg, #F0F6F4, #E9F5F3)',
+    color: '#004b8d',
+    bgGradient: 'linear-gradient(135deg, #f1f1e6, #e8e8da)',
   },
   {
     tag: 'Psikososial',
     title: 'Panduan Keluarga Mendampingi Korban',
     desc: 'Dukungan dari orang terdekat sangat krusial. Temukan cara tepat mendampingi tanpa menambah trauma.',
-    color: '#F4A261',
-    bgGradient: 'linear-gradient(135deg, #FFF4ED, #FFE8DC)',
+    color: '#43acff',
+    bgGradient: 'linear-gradient(135deg, #e8f5ff, #d6edff)',
   },
   {
     tag: 'Pencegahan',
     title: 'Kenali Tanda-Tanda Kekerasan Sejak Dini',
     desc: 'Edukasi dini adalah kunci pencegahan. Pelajari pola kekerasan yang sering terlewatkan.',
-    color: '#E9C46A',
-    bgGradient: 'linear-gradient(135deg, #FEF9E8, #FCF2DA)',
+    color: '#004b8d',
+    bgGradient: 'linear-gradient(135deg, #fff7d6, #fff0b3)',
   },
 ];
 
@@ -29,7 +29,7 @@ export default function Edukasi() {
     <section
       id="edukasi"
       style={{
-        background: '#F8FBF9',
+        background: '#f1f1e6',
         padding: '100px 40px',
         position: 'relative',
         overflow: 'hidden',
@@ -43,7 +43,7 @@ export default function Edukasi() {
           width: 350,
           height: 350,
           borderRadius: '50% 50% 30% 70% / 60% 40% 60% 40%',
-          background: 'radial-gradient(circle, rgba(42,157,143,0.03) 0%, transparent 70%)',
+          background: 'radial-gradient(circle, rgba(0,75,141,0.03) 0%, transparent 70%)',
           pointerEvents: 'none',
         }}
       />
@@ -55,10 +55,10 @@ export default function Edukasi() {
               fontFamily: "'Inter', system-ui, sans-serif",
               fontSize: 13,
               fontWeight: 600,
-              color: '#2A9D8F',
+              color: '#004b8d',
               letterSpacing: '1.5px',
               textTransform: 'uppercase',
-              background: '#E9F5F3',
+              background: '#fff7d6',
               padding: '4px 16px',
               borderRadius: 40,
               display: 'inline-block',
@@ -71,20 +71,20 @@ export default function Edukasi() {
               fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif",
               fontSize: 'clamp(32px, 4vw, 44px)',
               fontWeight: 700,
-              color: '#264653',
+              color: '#001f3d',
               marginTop: 20,
               marginBottom: 16,
               letterSpacing: '-0.8px',
             }}
           >
             Pengetahuan untuk{' '}
-            <span style={{ color: '#F4A261' }}>Keberanian</span>
+            <span style={{ color: '#43acff' }}>Keberanian</span>
           </h2>
           <p
             style={{
               fontFamily: "'Inter', system-ui, sans-serif",
               fontSize: 16,
-              color: '#5D7180',
+              color: '#3a5068',
               maxWidth: 540,
               margin: '0 auto',
               lineHeight: 1.7,
@@ -109,14 +109,14 @@ export default function Edukasi() {
                 borderRadius: '24px 16px 24px 16px',
                 overflow: 'hidden',
                 background: '#fff',
-                border: '1px solid rgba(42, 157, 143, 0.1)',
+                border: '1px solid rgba(0, 75, 141, 0.1)',
                 boxShadow: '0 8px 20px rgba(0, 0, 0, 0.02)',
                 transition: 'all 0.35s ease',
                 cursor: 'pointer',
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.transform = 'translateY(-10px)';
-                e.currentTarget.style.boxShadow = '0 25px 40px rgba(42, 157, 143, 0.1)';
+                e.currentTarget.style.boxShadow = '0 25px 40px rgba(0, 75, 141, 0.1)';
                 e.currentTarget.style.borderRadius = '16px 24px 16px 24px';
               }}
               onMouseLeave={(e) => {
@@ -147,7 +147,7 @@ export default function Edukasi() {
                 <span
                   style={{
                     display: 'inline-block',
-                    background: '#E9F5F3',
+                    background: '#f1f1e6',
                     color: article.color,
                     borderRadius: 40,
                     padding: '4px 16px',
@@ -164,7 +164,7 @@ export default function Edukasi() {
                     fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif",
                     fontSize: 19,
                     fontWeight: 700,
-                    color: '#264653',
+                    color: '#001f3d',
                     marginBottom: 12,
                     lineHeight: 1.4,
                   }}
@@ -176,7 +176,7 @@ export default function Edukasi() {
                     fontFamily: "'Inter', system-ui, sans-serif",
                     fontSize: 14,
                     lineHeight: 1.7,
-                    color: '#5D7180',
+                    color: '#3a5068',
                     marginBottom: 24,
                   }}
                 >
@@ -187,7 +187,7 @@ export default function Edukasi() {
                     display: 'flex',
                     alignItems: 'center',
                     gap: 8,
-                    color: '#2A9D8F',
+                    color: '#004b8d',
                     fontFamily: "'Inter', system-ui, sans-serif",
                     fontSize: 14,
                     fontWeight: 600,
@@ -202,7 +202,7 @@ export default function Edukasi() {
                 >
                   Baca selengkapnya
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                    <path d="M5 12h14M12 5l7 7-7 7" stroke="#2A9D8F" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M5 12h14M12 5l7 7-7 7" stroke="#004b8d" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                   </svg>
                 </div>
               </div>
