@@ -115,7 +115,7 @@ export default function MyReportsPage() {
                 {getStatusLabel(item.status)}
               </span>
               <Link
-                href={`/users/reports/${item.id}`}
+                href={`/users/report/${item.id}`}
                 style={{
                   fontFamily: "'Inter', system-ui, sans-serif",
                   fontSize: 13, fontWeight: 600, color: '#004b8d',
