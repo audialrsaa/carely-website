@@ -1,9 +1,10 @@
-// components/sidebarUser.jsx
+// components/SidebarUser.jsx
 "use client";
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, AlertCircle, FileText, Settings, LogOut, Heart } from "lucide-react";
+import { LayoutDashboard, AlertCircle, FileText, Settings, LogOut } from "lucide-react";
+import Image from "next/image";
 
 export default function SidebarUser() {
   const pathname = usePathname();
@@ -26,7 +27,7 @@ export default function SidebarUser() {
 
   return (
     <aside style={{
-      width: 256,
+      width: 260,
       minHeight: '100vh',
       background: '#fff',
       borderRight: '1px solid rgba(0, 75, 141, 0.08)',
@@ -35,25 +36,32 @@ export default function SidebarUser() {
       flexShrink: 0,
     }}>
       {/* Logo */}
-      <div style={{ padding: 24, borderBottom: '1px solid rgba(0, 75, 141, 0.08)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+      <div style={{ padding: '24px 20px', borderBottom: '1px solid rgba(0, 75, 141, 0.08)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <div style={{
-            width: 36, height: 36, borderRadius: 10,
+            width: 40, height: 40, borderRadius: 10,
             background: 'linear-gradient(135deg, #004b8d, #43acff)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             boxShadow: '0 4px 10px rgba(0, 75, 141, 0.25)',
+            overflow: 'hidden',
           }}>
-            <Heart size={18} color="white" />
+            <Image 
+              src="/images/logo.png" 
+              alt="Logo" 
+              width={32} 
+              height={32}
+              style={{ objectFit: 'contain' }}
+            />
           </div>
           <div>
-            <h1 style={{ fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif", fontWeight: 700, fontSize: 15, color: '#001f3d', margin: 0 }}>Carely</h1>
-            <p style={{ fontFamily: "'Inter', system-ui, sans-serif", fontSize: 10, color: '#3a5068', margin: 0 }}>Your Safe Space to Speak</p>
+            <h1 style={{ fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif", fontWeight: 700, fontSize: 18, color: '#001f3d', margin: 0 }}>Carely</h1>
+            <p style={{ fontFamily: "'Inter', system-ui, sans-serif", fontSize: 10, color: '#3a5068', margin: 0 }}>Safe Space to Speak</p>
           </div>
         </div>
       </div>
 
       {/* Menu */}
-      <nav style={{ flex: 1, padding: 16, display: 'flex', flexDirection: 'column', gap: 4 }}>
+      <nav style={{ flex: 1, padding: 20, display: 'flex', flexDirection: 'column', gap: 6 }}>
         {menuItems.map((item) => {
           const active = pathname === item.href;
           const Icon = item.icon;
@@ -62,15 +70,14 @@ export default function SidebarUser() {
               <div
                 style={{
                   display: 'flex', alignItems: 'center', gap: 12,
-                  padding: '10px 14px', borderRadius: 12, fontSize: 14,
+                  padding: '12px 16px', borderRadius: 12, fontSize: 14,
                   fontFamily: "'Inter', system-ui, sans-serif",
-                  fontWeight: active ? 600 : 400,
+                  fontWeight: active ? 600 : 500,
                   cursor: 'pointer', transition: 'all 0.2s',
                   background: active ? '#f1f1e6' : 'transparent',
                   color: active ? '#004b8d' : '#3a5068',
-                  borderLeft: active ? '3px solid #004b8d' : '3px solid transparent',
                 }}
-                onMouseEnter={(e) => { if (!active) { e.currentTarget.style.background = '#f1f1e6'; e.currentTarget.style.color = '#004b8d'; } }}
+                onMouseEnter={(e) => { if (!active) { e.currentTarget.style.background = '#f8f9ff'; e.currentTarget.style.color = '#004b8d'; } }}
                 onMouseLeave={(e) => { if (!active) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#3a5068'; } }}
               >
                 <Icon size={18} />
@@ -82,18 +89,18 @@ export default function SidebarUser() {
       </nav>
 
       {/* Logout */}
-      <div style={{ padding: 16, borderTop: '1px solid rgba(0, 75, 141, 0.08)' }}>
+      <div style={{ padding: '20px', borderTop: '1px solid rgba(0, 75, 141, 0.08)' }}>
         <button
           onClick={handleLogout}
           style={{
             width: '100%', display: 'flex', alignItems: 'center', gap: 12,
-            padding: '10px 14px', borderRadius: 12, border: 'none',
+            padding: '12px 16px', borderRadius: 12, border: 'none',
             background: 'transparent', cursor: 'pointer', fontSize: 14,
             fontFamily: "'Inter', system-ui, sans-serif", fontWeight: 500,
             color: '#004b8d', transition: 'all 0.2s',
           }}
-          onMouseEnter={(e) => { e.currentTarget.style.background = '#fff7d6'; e.currentTarget.style.color = '#004b8d'; }}
-          onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#004b8d'; }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = '#fff7d6'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
         >
           <LogOut size={18} />
           Keluar

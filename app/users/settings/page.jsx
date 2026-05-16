@@ -1,13 +1,14 @@
+// app/users/profile/page.jsx
 "use client";
 
 import { useEffect, useState } from "react";
-import { User, Mail, Phone, MapPin, Lock, Edit2, Save, X, Camera } from "lucide-react";
+import { User, Mail, Phone, MapPin, Lock, Edit2, Save, X, Camera, CheckCircle, AlertCircle as AlertCircleIcon } from "lucide-react";
 
 export default function ProfilePage() {
   const [form, setForm] = useState({ full_name: "", email: "", phone: "", address: "" });
   const [password, setPassword] = useState({ old_password: "", new_password: "" });
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState("");
+  const [message, setMessage] = useState({ type: "", text: "" });
   const [isEditMode, setIsEditMode] = useState(false);
   const [editForm, setEditForm] = useState({ full_name: "", phone: "", address: "" });
 
@@ -27,29 +28,29 @@ export default function ProfilePage() {
       const data = await safeFetch("http://localhost:5000/api/users/profile", { headers: { Authorization: `Bearer ${token}` } });
       setForm({ full_name: data.full_name || "", email: data.email || "", phone: data.phone || "", address: data.address || "" });
       setEditForm({ full_name: data.full_name || "", phone: data.phone || "", address: data.address || "" });
-    } catch (err) { setMessage(err.message); }
+    } catch (err) { setMessage({ type: "error", text: err.message }); }
   };
 
   useEffect(() => { if (token) fetchProfile(); }, [token]);
 
   const handleUpdate = async (e) => {
-    e.preventDefault(); setLoading(true); setMessage("");
+    e.preventDefault(); setLoading(true); setMessage({ type: "", text: "" });
     try {
       await safeFetch("http://localhost:5000/api/users/profile", { method: "PUT", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }, body: JSON.stringify({ full_name: editForm.full_name, phone: editForm.phone, address: editForm.address }) });
       setForm({ ...form, full_name: editForm.full_name, phone: editForm.phone, address: editForm.address });
-      setMessage("Profile Berhasil di Update");
+      setMessage({ type: "success", text: "Profile berhasil diupdate" });
       setIsEditMode(false);
-    } catch (err) { setMessage(err.message); }
+    } catch (err) { setMessage({ type: "error", text: err.message }); }
     finally { setLoading(false); }
   };
 
   const handleChangePassword = async (e) => {
-    e.preventDefault(); setLoading(true); setMessage("");
+    e.preventDefault(); setLoading(true); setMessage({ type: "", text: "" });
     try {
       await safeFetch("http://localhost:5000/api/users/change-password", { method: "PUT", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }, body: JSON.stringify(password) });
-      setMessage("✅ Password berhasil diubah");
+      setMessage({ type: "success", text: "Password berhasil diubah" });
       setPassword({ old_password: "", new_password: "" });
-    } catch (err) { setMessage(err.message); }
+    } catch (err) { setMessage({ type: "error", text: err.message }); }
     finally { setLoading(false); }
   };
 
@@ -59,8 +60,8 @@ export default function ProfilePage() {
   };
 
   const inputStyle = {
-    width: '100%', padding: '12px 16px', borderRadius: 14,
-    border: '1.5px solid rgba(0, 75, 141, 0.2)', background: '#f1f1e6',
+    width: '100%', padding: '12px 16px', borderRadius: 12,
+    border: '1.5px solid #e2e8f0', background: '#fff',
     fontFamily: "'Inter', system-ui, sans-serif", fontSize: 14,
     transition: 'all 0.2s ease', outline: 'none', boxSizing: 'border-box',
     color: '#001f3d',
@@ -69,11 +70,11 @@ export default function ProfilePage() {
   const labelStyle = { fontFamily: "'Inter', system-ui, sans-serif", fontSize: 13, fontWeight: 600, color: '#001f3d', display: 'block', marginBottom: 6 };
 
   const onFocus = (e) => { e.currentTarget.style.borderColor = '#004b8d'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(0, 75, 141, 0.1)'; };
-  const onBlur = (e) => { e.currentTarget.style.borderColor = 'rgba(0, 75, 141, 0.2)'; e.currentTarget.style.boxShadow = 'none'; };
+  const onBlur = (e) => { e.currentTarget.style.borderColor = '#e2e8f0'; e.currentTarget.style.boxShadow = 'none'; };
 
   const profileCardStyle = {
     background: '#fff', borderRadius: 24,
-    boxShadow: '0 8px 24px rgba(0, 75, 141, 0.08)',
+    boxShadow: '0 8px 32px rgba(0, 75, 141, 0.08)',
     border: '1px solid rgba(0, 75, 141, 0.08)',
     overflow: 'hidden',
   };
@@ -89,7 +90,7 @@ export default function ProfilePage() {
   const iconWrapperStyle = {
     width: 44,
     height: 44,
-    borderRadius: 14,
+    borderRadius: 12,
     background: 'rgba(0, 75, 141, 0.08)',
     display: 'flex',
     alignItems: 'center',
@@ -104,9 +105,21 @@ export default function ProfilePage() {
         <p style={{ fontFamily: "'Inter', system-ui", fontSize: 14, color: '#3a5068', marginTop: 6 }}>Kelola informasi profil dan keamanan akun Anda</p>
       </div>
 
-      {message && (
-        <div style={{ padding: '12px 18px', background: message.startsWith('✅') ? '#e6f9f4' : '#fff7d6', border: `1px solid ${message.startsWith('✅') ? 'rgba(10,124,92,0.3)' : 'rgba(0,75,141,0.2)'}`, borderRadius: 14, fontSize: 13, color: message.startsWith('✅') ? '#0a7c5c' : '#004b8d', fontFamily: "'Inter', system-ui" }}>
-          {message}
+      {message.text && (
+        <div style={{ 
+          padding: '12px 18px', 
+          background: message.type === 'success' ? '#e6f9f4' : '#fde8e8', 
+          border: `1px solid ${message.type === 'success' ? 'rgba(10,124,92,0.3)' : 'rgba(192,57,43,0.2)'}`, 
+          borderRadius: 12, 
+          fontSize: 13, 
+          color: message.type === 'success' ? '#0a7c5c' : '#c0392b', 
+          fontFamily: "'Inter', system-ui",
+          display: 'flex',
+          alignItems: 'center',
+          gap: 10,
+        }}>
+          {message.type === 'success' ? <CheckCircle size={16} /> : <AlertCircleIcon size={16} />}
+          {message.text}
         </div>
       )}
 
@@ -122,7 +135,7 @@ export default function ProfilePage() {
                     {form.full_name ? form.full_name.charAt(0).toUpperCase() : 'U'}
                   </span>
                 </div>
-                <div style={{ position: 'absolute', bottom: 4, right: 4, background: '#fff', borderRadius: '50%', padding: 6, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
+                <div style={{ position: 'absolute', bottom: 4, right: 4, background: '#fff', borderRadius: '50%', padding: 6, boxShadow: '0 2px 8px rgba(0,0,0,0.1)', cursor: 'pointer' }}>
                   <Camera size={18} color="#004b8d" />
                 </div>
               </div>
@@ -196,7 +209,7 @@ export default function ProfilePage() {
                 <div>
                   <label style={labelStyle}>No Handphone</label>
                   <input
-                    type="text"
+                    type="tel"
                     style={inputStyle}
                     value={editForm.phone}
                     onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
@@ -214,20 +227,21 @@ export default function ProfilePage() {
                     onFocus={onFocus}
                     onBlur={onBlur}
                     placeholder="Masukkan alamat lengkap"
+                    rows={3}
                   />
                 </div>
                 <div style={{ display: 'flex', gap: 12, marginTop: 8 }}>
                   <button
                     type="submit"
                     disabled={loading}
-                    style={{ background: '#004b8d', color: '#fff', border: 'none', borderRadius: 40, padding: '10px 24px', fontFamily: "'Inter', system-ui", fontWeight: 600, fontSize: 14, cursor: loading ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}
+                    style={{ background: '#004b8d', color: '#fff', border: 'none', borderRadius: 40, padding: '10px 28px', fontFamily: "'Inter', system-ui", fontWeight: 600, fontSize: 14, cursor: loading ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}
                   >
                     <Save size={16} /> {loading ? "Menyimpan..." : "Simpan"}
                   </button>
                   <button
                     type="button"
                     onClick={handleCancelEdit}
-                    style={{ background: '#f1f1e6', color: '#3a5068', border: 'none', borderRadius: 40, padding: '10px 24px', fontFamily: "'Inter', system-ui", fontWeight: 600, fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}
+                    style={{ background: '#f1f1e6', color: '#3a5068', border: 'none', borderRadius: 40, padding: '10px 28px', fontFamily: "'Inter', system-ui", fontWeight: 600, fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}
                   >
                     <X size={16} /> Batal
                   </button>
@@ -239,9 +253,11 @@ export default function ProfilePage() {
       </div>
 
       {/* Change Password Section */}
-      <div style={{ background: '#fff', borderRadius: 24, padding: 28, boxShadow: '0 8px 24px rgba(0, 75, 141, 0.08)', border: '1px solid rgba(0, 75, 141, 0.08)' }}>
+      <div style={{ background: '#fff', borderRadius: 24, padding: 28, boxShadow: '0 8px 32px rgba(0, 75, 141, 0.08)', border: '1px solid rgba(0, 75, 141, 0.08)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24, paddingBottom: 16, borderBottom: '1px solid rgba(0, 75, 141, 0.08)' }}>
-          <Lock size={22} color="#004b8d" />
+          <div style={{ width: 40, height: 40, borderRadius: 12, background: 'rgba(0, 75, 141, 0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Lock size={20} color="#004b8d" />
+          </div>
           <h2 style={{ fontFamily: "'Plus Jakarta Sans', system-ui", fontSize: 20, fontWeight: 700, color: '#001f3d' }}>Ganti Password</h2>
         </div>
         <form onSubmit={handleChangePassword} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
@@ -251,10 +267,10 @@ export default function ProfilePage() {
           </div>
           <div>
             <label style={labelStyle}>Password Baru</label>
-            <input type="password" placeholder="Masukkan password baru" style={inputStyle} value={password.new_password} onChange={(e) => setPassword({ ...password, new_password: e.target.value })} onFocus={onFocus} onBlur={onBlur} />
+            <input type="password" placeholder="Masukkan password baru (minimal 6 karakter)" style={inputStyle} value={password.new_password} onChange={(e) => setPassword({ ...password, new_password: e.target.value })} onFocus={onFocus} onBlur={onBlur} />
           </div>
           <button type="submit" disabled={loading}
-            style={{ background: '#004b8d', color: '#fff', border: 'none', borderRadius: 40, padding: '12px 28px', fontFamily: "'Inter', system-ui", fontWeight: 600, fontSize: 14, cursor: loading ? 'not-allowed' : 'pointer', transition: 'all 0.2s', alignSelf: 'flex-start' }}>
+            style={{ background: '#004b8d', color: '#fff', border: 'none', borderRadius: 40, padding: '12px 32px', fontFamily: "'Inter', system-ui", fontWeight: 600, fontSize: 14, cursor: loading ? 'not-allowed' : 'pointer', transition: 'all 0.2s', alignSelf: 'flex-start' }}>
             {loading ? "Memproses..." : "Update Password"}
           </button>
         </form>

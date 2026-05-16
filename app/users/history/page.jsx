@@ -1,8 +1,9 @@
+// app/users/history/page.jsx — MyReportsPage
 "use client";
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { FileText } from "lucide-react";
+import { FileText, Loader2, AlertCircle, FileQuestion, ChevronRight } from "lucide-react";
 
 export default function MyReportsPage() {
   const [reports, setReports] = useState([]);
@@ -31,24 +32,19 @@ export default function MyReportsPage() {
 
   const getStatusStyle = (status) => {
     switch (status) {
-      case "pending":   return { background: '#fff7d6', color: '#b07d00' };
-      case "diproses":  return { background: '#e8f5ff', color: '#004b8d' };
-      case "selesai":   return { background: '#e6f9f4', color: '#0a7c5c' };
-      case "rejected":  return { background: '#fde8e8', color: '#c0392b' };
-      default:          return { background: '#f1f1e6', color: '#3a5068' };
+      case "pending":   return { background: '#fff7d6', color: '#b07d00', label: 'Menunggu' };
+      case "diproses":  return { background: '#e8f5ff', color: '#004b8d', label: 'Diproses' };
+      case "selesai":   return { background: '#e6f9f4', color: '#0a7c5c', label: 'Selesai' };
+      case "rejected":  return { background: '#fde8e8', color: '#c0392b', label: 'Ditolak' };
+      default:          return { background: '#f1f1e6', color: '#3a5068', label: status };
     }
-  };
-
-  const getStatusLabel = (status) => {
-    const map = { pending: 'Menunggu', diproses: 'Diproses', selesai: 'Selesai', rejected: 'Ditolak' };
-    return map[status] || status;
   };
 
   return (
     <div>
       {/* Header */}
       <div style={{ marginBottom: 28 }}>
-        <h1 style={{ fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif", fontSize: 28, fontWeight: 800, color: '#001f3d', marginBottom: 6 }}>
+        <h1 style={{ fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif", fontSize: 32, fontWeight: 800, color: '#001f3d', marginBottom: 8 }}>
           Riwayat Laporan Saya
         </h1>
         <p style={{ fontFamily: "'Inter', system-ui, sans-serif", fontSize: 14, color: '#3a5068' }}>
@@ -58,79 +54,112 @@ export default function MyReportsPage() {
 
       {/* States */}
       {loading && (
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '60px 0', gap: 12 }}>
-          <div style={{ width: 32, height: 32, border: '3px solid #f1f1e6', borderTopColor: '#004b8d', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '80px 0', gap: 12 }}>
+          <Loader2 size={32} style={{ color: '#004b8d', animation: 'spin 1s linear infinite' }} />
           <span style={{ color: '#3a5068', fontSize: 14, fontFamily: "'Inter', system-ui" }}>Memuat data...</span>
           <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
         </div>
       )}
 
       {error && (
-        <div style={{ background: '#fde8e8', border: '1px solid rgba(192,57,43,0.2)', borderRadius: 14, padding: '12px 18px', color: '#c0392b', fontFamily: "'Inter', system-ui", fontSize: 13, marginBottom: 20 }}>
+        <div style={{ 
+          background: '#fde8e8', 
+          border: '1px solid rgba(192,57,43,0.2)', 
+          borderRadius: 12, 
+          padding: '14px 20px', 
+          display: 'flex',
+          alignItems: 'center',
+          gap: 10,
+          color: '#c0392b', 
+          fontFamily: "'Inter', system-ui", 
+          fontSize: 13, 
+          marginBottom: 20 
+        }}>
+          <AlertCircle size={16} />
           {error}
         </div>
       )}
 
       {!loading && reports.length === 0 && !error && (
         <div style={{ background: '#fff', borderRadius: 20, border: '1px solid rgba(0,75,141,0.1)', padding: '60px 20px', textAlign: 'center' }}>
-          <FileText style={{ color: '#c8d6e5', margin: '0 auto 14px' }} size={48} />
-          <p style={{ color: '#3a5068', fontSize: 14, fontFamily: "'Inter', system-ui", marginBottom: 10 }}>Belum ada laporan.</p>
-          <Link href="/users/report/new" style={{ color: '#004b8d', fontSize: 14, fontWeight: 600, textDecoration: 'none' }}>
-            Buat laporan pertama →
+          <FileQuestion size={52} color="#c8d6e5" style={{ margin: '0 auto 16px' }} />
+          <p style={{ color: '#3a5068', fontSize: 14, fontFamily: "'Inter', system-ui", marginBottom: 12 }}>Belum ada laporan.</p>
+          <Link href="/users/report/new" style={{ color: '#004b8d', fontSize: 14, fontWeight: 600, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+            Buat laporan pertama <ChevronRight size={14} />
           </Link>
         </div>
       )}
 
       {/* Report List */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-        {reports.map((item) => (
-          <div
-            key={item.id}
-            style={{
-              background: '#fff',
-              padding: '18px 24px',
-              borderRadius: 18,
-              boxShadow: '0 2px 8px rgba(0,75,141,0.06)',
-              border: '1px solid rgba(0,75,141,0.08)',
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              gap: 16,
-              transition: 'box-shadow 0.2s, border-color 0.2s',
-            }}
-            onMouseEnter={(e) => { e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,75,141,0.1)'; e.currentTarget.style.borderColor = 'rgba(0,75,141,0.18)'; }}
-            onMouseLeave={(e) => { e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,75,141,0.06)'; e.currentTarget.style.borderColor = 'rgba(0,75,141,0.08)'; }}
-          >
-            <div style={{ minWidth: 0 }}>
-              <h2 style={{ fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif", fontWeight: 700, fontSize: 16, color: '#001f3d', marginBottom: 4, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                {item.title}
-              </h2>
-              <p style={{ fontFamily: "'Inter', system-ui, sans-serif", fontSize: 13, color: '#3a5068' }}>
-                {item.category_name} • {new Date(item.created_at).toLocaleDateString("id-ID")}
-              </p>
-            </div>
-
-            <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexShrink: 0 }}>
-              <span style={{ fontSize: 12, padding: '5px 14px', borderRadius: 40, fontWeight: 700, fontFamily: "'Inter', system-ui", ...getStatusStyle(item.status) }}>
-                {getStatusLabel(item.status)}
-              </span>
-              <Link
-                href={`/users/report/${item.id}`}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        {reports.map((item) => {
+          const statusStyle = getStatusStyle(item.status);
+          return (
+            <Link
+              key={item.id}
+              href={`/users/report/${item.id}`}
+              style={{ textDecoration: 'none' }}
+            >
+              <div
                 style={{
-                  fontFamily: "'Inter', system-ui, sans-serif",
-                  fontSize: 13, fontWeight: 600, color: '#004b8d',
-                  textDecoration: 'none', padding: '6px 14px',
-                  borderRadius: 40, border: '1.5px solid rgba(0,75,141,0.3)',
+                  background: '#fff',
+                  padding: '18px 24px',
+                  borderRadius: 16,
+                  boxShadow: '0 2px 8px rgba(0,75,141,0.04)',
+                  border: '1px solid rgba(0,75,141,0.08)',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  gap: 16,
                   transition: 'all 0.2s',
+                  cursor: 'pointer',
                 }}
-                onMouseEnter={(e) => { e.currentTarget.style.background = '#004b8d'; e.currentTarget.style.color = '#fff'; }}
-                onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#004b8d'; }}
+                onMouseEnter={(e) => { 
+                  e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,75,141,0.1)';
+                  e.currentTarget.style.borderColor = 'rgba(0,75,141,0.15)';
+                  e.currentTarget.style.transform = 'translateX(4px)';
+                }}
+                onMouseLeave={(e) => { 
+                  e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,75,141,0.04)';
+                  e.currentTarget.style.borderColor = 'rgba(0,75,141,0.08)';
+                  e.currentTarget.style.transform = 'translateX(0)';
+                }}
               >
-                Detail
-              </Link>
-            </div>
-          </div>
-        ))}
+                <div style={{ minWidth: 0, flex: 1 }}>
+                  <h2 style={{ 
+                    fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif", 
+                    fontWeight: 700, 
+                    fontSize: 16, 
+                    color: '#001f3d', 
+                    marginBottom: 6,
+                    whiteSpace: 'nowrap', 
+                    overflow: 'hidden', 
+                    textOverflow: 'ellipsis' 
+                  }}>
+                    {item.title}
+                  </h2>
+                  <p style={{ fontFamily: "'Inter', system-ui, sans-serif", fontSize: 13, color: '#6c7a8e' }}>
+                    {item.category_name} • {new Date(item.created_at).toLocaleDateString("id-ID")}
+                  </p>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
+                  <span style={{ 
+                    fontSize: 12, 
+                    padding: '5px 14px', 
+                    borderRadius: 40, 
+                    fontWeight: 600, 
+                    fontFamily: "'Inter', system-ui", 
+                    ...statusStyle 
+                  }}>
+                    {statusStyle.label}
+                  </span>
+                  <ChevronRight size={18} color="#004b8d" />
+                </div>
+              </div>
+            </Link>
+          );
+        })}
       </div>
     </div>
   );

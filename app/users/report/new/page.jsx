@@ -1,11 +1,10 @@
 // ============================================================
 // app/users/report/new/page.jsx — CREATE REPORT USER
-// TERHUBUNG API BACKEND POST /api/reports
 // ============================================================
 "use client";
 
 import { useEffect, useState } from "react";
-import { Upload, ArrowLeft, Send } from "lucide-react";
+import { Upload, ArrowLeft, Send, Image, AlertCircle, CheckCircle, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
@@ -17,6 +16,7 @@ export default function CreateReportPage() {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [uploadStatus, setUploadStatus] = useState({ type: "", message: "" });
 
   const [formData, setFormData] = useState({
     category_id: "",
@@ -28,6 +28,7 @@ export default function CreateReportPage() {
   });
 
   const [previewName, setPreviewName] = useState("");
+  const [previewUrl, setPreviewUrl] = useState("");
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -48,18 +49,32 @@ export default function CreateReportPage() {
   const handleChange = (e) => {
     const { name, value, files } = e.target;
 
-    if (files) {
+    if (files && files[0]) {
+      const file = files[0];
+      
+      if (!file.type.startsWith('image/')) {
+        setUploadStatus({ type: "error", message: "File harus berupa gambar" });
+        return;
+      }
+      
+      if (file.size > 5 * 1024 * 1024) {
+        setUploadStatus({ type: "error", message: "Ukuran file maksimal 5MB" });
+        return;
+      }
+
       setFormData((prev) => ({
         ...prev,
-        [name]: files[0],
+        [name]: file,
       }));
 
-      setPreviewName(files[0]?.name || "");
-    } else {
-      setFormData((prev) => ({
-        ...prev,
-        [name]: value,
-      }));
+      setPreviewName(file.name);
+      
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPreviewUrl(reader.result);
+      };
+      reader.readAsDataURL(file);
+      setUploadStatus({ type: "", message: "" });
     }
   };
 
@@ -74,6 +89,7 @@ export default function CreateReportPage() {
     }
 
     setSubmitting(true);
+    setUploadStatus({ type: "", message: "" });
 
     try {
       const body = new FormData();
@@ -102,10 +118,12 @@ export default function CreateReportPage() {
         throw new Error(data.message || "Gagal membuat laporan");
       }
 
-      alert("Laporan berhasil dikirim");
-      router.push("/users");
+      setUploadStatus({ type: "success", message: "Laporan berhasil dikirim" });
+      setTimeout(() => {
+        router.push("/users");
+      }, 1500);
     } catch (err) {
-      alert(err.message);
+      setUploadStatus({ type: "error", message: err.message });
     } finally {
       setSubmitting(false);
     }
@@ -113,15 +131,12 @@ export default function CreateReportPage() {
 
   if (loading) {
     return (
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          minHeight: "300px",
-        }}
-      >
-        Loading...
+      <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "400px" }}>
+        <div style={{ textAlign: "center" }}>
+          <Loader2 size={40} style={{ color: "#004b8d", animation: "spin 1s linear infinite" }} />
+          <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+          <p style={{ marginTop: 12, color: "#3a5068" }}>Memuat kategori...</p>
+        </div>
       </div>
     );
   }
@@ -129,7 +144,7 @@ export default function CreateReportPage() {
   return (
     <div style={{ maxWidth: 900, margin: "0 auto" }}>
       {/* Header */}
-      <div style={{ marginBottom: 24 }}>
+      <div style={{ marginBottom: 28 }}>
         <Link
           href="/users"
           style={{
@@ -139,8 +154,11 @@ export default function CreateReportPage() {
             color: "#004b8d",
             textDecoration: "none",
             fontWeight: 600,
-            marginBottom: 16,
+            marginBottom: 20,
+            transition: "gap 0.2s",
           }}
+          onMouseEnter={(e) => e.currentTarget.style.gap = "12px"}
+          onMouseLeave={(e) => e.currentTarget.style.gap = "8px"}
         >
           <ArrowLeft size={18} />
           Kembali ke Dashboard
@@ -151,16 +169,35 @@ export default function CreateReportPage() {
             fontSize: 32,
             fontWeight: 800,
             color: "#001f3d",
-            marginBottom: 8,
+            marginBottom: 10,
+            fontFamily: "'Plus Jakarta Sans', system-ui",
           }}
         >
           Buat Laporan Baru
         </h1>
 
-        <p style={{ color: "#3a5068", fontSize: 14 }}>
+        <p style={{ color: "#3a5068", fontSize: 14, lineHeight: 1.5 }}>
           Isi detail laporan secara lengkap. Data Anda dijaga aman dan rahasia.
         </p>
       </div>
+
+      {/* Status Message */}
+      {uploadStatus.message && (
+        <div style={{ 
+          padding: "12px 18px", 
+          borderRadius: 12, 
+          marginBottom: 20,
+          display: "flex",
+          alignItems: "center",
+          gap: 10,
+          background: uploadStatus.type === "success" ? "#e6f9f4" : "#fde8e8",
+          border: `1px solid ${uploadStatus.type === "success" ? "rgba(10,124,92,0.3)" : "rgba(192,57,43,0.2)"}`,
+          color: uploadStatus.type === "success" ? "#0a7c5c" : "#c0392b"
+        }}>
+          {uploadStatus.type === "success" ? <CheckCircle size={16} /> : <AlertCircle size={16} />}
+          {uploadStatus.message}
+        </div>
+      )}
 
       {/* Form */}
       <form onSubmit={handleSubmit}>
@@ -168,12 +205,12 @@ export default function CreateReportPage() {
           style={{
             background: "#fff",
             borderRadius: 20,
-            padding: 24,
-            boxShadow: "0 2px 8px rgba(0,75,141,0.06)",
+            padding: 28,
+            boxShadow: "0 4px 20px rgba(0,75,141,0.08)",
             border: "1px solid rgba(0,75,141,0.08)",
             display: "flex",
             flexDirection: "column",
-            gap: 20,
+            gap: 22,
           }}
         >
           {/* Category */}
@@ -222,7 +259,7 @@ export default function CreateReportPage() {
               style={{
                 ...inputStyle,
                 resize: "vertical",
-                borderRadius: 16,
+                fontFamily: "'Inter', system-ui",
               }}
             />
           </div>
@@ -258,35 +295,76 @@ export default function CreateReportPage() {
           <div>
             <label style={labelStyle}>Bukti Foto (Opsional)</label>
 
-            <label
+            <div
               style={{
                 border: "2px dashed #c8d6e5",
                 borderRadius: 16,
-                padding: 24,
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                gap: 10,
-                cursor: "pointer",
-                background: "#f8fbff",
+                padding: previewUrl ? 16 : 32,
+                textAlign: "center",
+                background: "#fafcff",
+                transition: "border-color 0.2s",
               }}
+              onDragOver={(e) => { e.preventDefault(); e.currentTarget.style.borderColor = "#004b8d"; }}
+              onDragLeave={(e) => { e.currentTarget.style.borderColor = "#c8d6e5"; }}
             >
-              <Upload size={28} color="#004b8d" />
-              <span style={{ color: "#004b8d", fontWeight: 600 }}>
-                Upload Bukti
-              </span>
-              <span style={{ fontSize: 12, color: "#3a5068" }}>
-                {previewName || "Klik untuk memilih file"}
-              </span>
-
-              <input
-                type="file"
-                name="bukti_foto"
-                accept="image/*"
-                onChange={handleChange}
-                hidden
-              />
-            </label>
+              {previewUrl ? (
+                <div>
+                  <img 
+                    src={previewUrl} 
+                    alt="Preview" 
+                    style={{ 
+                      maxWidth: "100%", 
+                      maxHeight: 200, 
+                      objectFit: "contain",
+                      borderRadius: 12,
+                      marginBottom: 12
+                    }} 
+                  />
+                  <p style={{ fontSize: 13, color: "#3a5068", marginBottom: 12 }}>
+                    {previewName}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setFormData(prev => ({ ...prev, bukti_foto: null }));
+                      setPreviewName("");
+                      setPreviewUrl("");
+                    }}
+                    style={{
+                      background: "#fde8e8",
+                      border: "none",
+                      padding: "6px 16px",
+                      borderRadius: 20,
+                      fontSize: 12,
+                      color: "#c0392b",
+                      cursor: "pointer",
+                    }}
+                  >
+                    Hapus
+                  </button>
+                </div>
+              ) : (
+                <label style={{ cursor: "pointer", display: "block" }}>
+                  <Upload size={32} color="#004b8d" style={{ margin: "0 auto 12px" }} />
+                  <span style={{ color: "#004b8d", fontWeight: 600, display: "block", marginBottom: 6 }}>
+                    Upload Bukti
+                  </span>
+                  <span style={{ fontSize: 12, color: "#3a5068" }}>
+                    Klik atau drag & drop file gambar
+                  </span>
+                  <span style={{ fontSize: 11, color: "#8a9bb0", display: "block", marginTop: 6 }}>
+                    Maksimal 5MB (JPG, PNG)
+                  </span>
+                  <input
+                    type="file"
+                    name="bukti_foto"
+                    accept="image/*"
+                    onChange={handleChange}
+                    hidden
+                  />
+                </label>
+              )}
+            </div>
           </div>
 
           {/* Submit */}
@@ -298,7 +376,7 @@ export default function CreateReportPage() {
               color: "#fff",
               border: "none",
               borderRadius: 40,
-              padding: "14px 24px",
+              padding: "14px 28px",
               fontWeight: 700,
               fontSize: 15,
               cursor: submitting ? "not-allowed" : "pointer",
@@ -306,9 +384,13 @@ export default function CreateReportPage() {
               justifyContent: "center",
               alignItems: "center",
               gap: 10,
+              transition: "all 0.2s",
+              marginTop: 8,
             }}
+            onMouseEnter={(e) => { if (!submitting) e.currentTarget.style.background = "#003d6e"; }}
+            onMouseLeave={(e) => { if (!submitting) e.currentTarget.style.background = "#004b8d"; }}
           >
-            <Send size={18} />
+            {submitting ? <Loader2 size={18} style={{ animation: "spin 1s linear infinite" }} /> : <Send size={18} />}
             {submitting ? "Mengirim..." : "Kirim Laporan"}
           </button>
         </div>
@@ -321,16 +403,19 @@ const labelStyle = {
   display: "block",
   marginBottom: 8,
   fontSize: 14,
-  fontWeight: 700,
+  fontWeight: 600,
   color: "#001f3d",
+  fontFamily: "'Inter', system-ui",
 };
 
 const inputStyle = {
   width: "100%",
-  padding: "14px 16px",
-  borderRadius: 14,
-  border: "1px solid #d9e2ec",
+  padding: "12px 16px",
+  borderRadius: 12,
+  border: "1.5px solid #e2e8f0",
   fontSize: 14,
   outline: "none",
   background: "#fff",
+  fontFamily: "'Inter', system-ui",
+  transition: "border-color 0.2s, box-shadow 0.2s",
 };
