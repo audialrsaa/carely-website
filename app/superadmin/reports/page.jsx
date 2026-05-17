@@ -1,12 +1,12 @@
-// ============================================================
+// ===========================================
+// FILE 1:
 // app/superadmin/reports/page.jsx
-// Semua Laporan Superadmin
-// ============================================================
+// ===========================================
 "use client";
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Search, Eye } from "lucide-react";
+import { Search, Eye, FileText, Loader2 } from "lucide-react";
 
 const API = "http://localhost:5000/api";
 
@@ -20,14 +20,25 @@ export default function SuperAdminReportsPage() {
       try {
         const token = localStorage.getItem("token");
 
+        if (!token) {
+          window.location.href = "/login";
+          return;
+        }
+
         const res = await fetch(`${API}/reports`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
 
+        if (!res.ok) {
+          const text = await res.text();
+          console.error("Fetch Reports Error:", text);
+          return;
+        }
+
         const data = await res.json();
-        setReports(data);
+        setReports(Array.isArray(data) ? data : []);
       } catch (err) {
         console.error("Fetch Reports Error:", err);
       } finally {
@@ -40,57 +51,91 @@ export default function SuperAdminReportsPage() {
 
   const filteredReports = reports.filter(
     (report) =>
-      report.title.toLowerCase().includes(search.toLowerCase()) ||
+      report.title?.toLowerCase().includes(search.toLowerCase()) ||
       (report.reporter_name || "")
         .toLowerCase()
         .includes(search.toLowerCase())
   );
 
   const getStatusStyle = (status) => {
-    if (status === "pending")
-      return { bg: "#fff7d6", color: "#b07d00" };
+    const map = {
+      pending: { bg: "#fff7d6", color: "#b07d00", label: "Menunggu" },
+      diperiksa: { bg: "#e8f5ff", color: "#004b8d", label: "Diperiksa" },
+      diverifikasi: { bg: "#e8f5ff", color: "#004b8d", label: "Diverifikasi" },
+      tindak_lanjut: { bg: "#e8f5ff", color: "#004b8d", label: "Tindak Lanjut" },
+      selesai: { bg: "#e6f9f4", color: "#0a7c5c", label: "Selesai" },
+      rejected: { bg: "#fde8e8", color: "#c0392b", label: "Ditolak" },
+    };
 
-    if (status === "selesai")
-      return { bg: "#e6f9f4", color: "#0a7c5c" };
-
-    return { bg: "#eef6ff", color: "#004b8d" };
+    return map[status] || {
+      bg: "#f1f1e6",
+      color: "#3a5068",
+      label: status,
+    };
   };
 
-  if (loading) return <div style={{ padding: 30 }}>Loading...</div>;
+  if (loading) {
+    return (
+      <div style={styles.loadingWrap}>
+        <Loader2
+          size={42}
+          style={{ color: "#004b8d", animation: "spin 1s linear infinite" }}
+        />
+        <style>{`
+          @keyframes spin {
+            to { transform: rotate(360deg); }
+          }
+        `}</style>
+      </div>
+    );
+  }
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
       <div>
-        <h1 style={titleStyle}>Semua Laporan</h1>
-        <p style={subtitleStyle}>
-          Monitoring seluruh laporan user Carely
-        </p>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 12,
+            marginBottom: 8,
+          }}
+        >
+          <FileText size={28} color="#004b8d" />
+          <h1 style={styles.title}>Semua Laporan</h1>
+        </div>
+        <p style={styles.subtitle}>Monitoring seluruh laporan user Carely</p>
       </div>
 
-      {/* Search */}
-      <div style={searchBox}>
-        <Search size={18} color="#64748b" />
+      <div style={styles.statsCard}>
+        <FileText size={22} color="#004b8d" />
+        <div>
+          <p style={styles.statsLabel}>Total Laporan Keseluruhan</p>
+          <h2 style={styles.statsValue}>{reports.length}</h2>
+        </div>
+      </div>
+
+      <div style={styles.searchBox}>
+        <Search size={18} color="#8a9bb0" />
         <input
           type="text"
-          placeholder="Cari laporan..."
+          placeholder="Cari laporan berdasarkan judul atau pelapor..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          style={searchInput}
+          style={styles.searchInput}
         />
       </div>
 
-      {/* Table */}
-      <div style={tableWrap}>
-        <table style={tableStyle}>
-          <thead style={{ background: "#f8fafc" }}>
+      <div style={styles.tableWrap}>
+        <table style={styles.table}>
+          <thead>
             <tr>
-              <th style={thStyle}>Judul</th>
-              <th style={thStyle}>Pelapor</th>
-              <th style={thStyle}>Kategori</th>
-              <th style={thStyle}>Prioritas</th>
-              <th style={thStyle}>Status</th>
-              <th style={thStyle}>Tanggal</th>
-              <th style={thStyle}>Detail</th>
+              <th style={styles.th}>Judul</th>
+              <th style={styles.th}>Pelapor</th>
+              <th style={styles.th}>Kategori</th>
+              <th style={styles.th}>Status</th>
+              <th style={styles.th}>Tanggal</th>
+              <th style={styles.th}>Detail</th>
             </tr>
           </thead>
 
@@ -100,36 +145,30 @@ export default function SuperAdminReportsPage() {
 
               return (
                 <tr key={report.id}>
-                  <td style={tdStyle}>{report.title}</td>
-                  <td style={tdStyle}>{report.reporter_name || "-"}</td>
-                  <td style={tdStyle}>{report.category_name || "-"}</td>
-                  <td style={tdStyle}>{report.priority || "-"}</td>
+                  <td style={styles.td}>{report.title}</td>
+                  <td style={styles.td}>{report.reporter_name || "-"}</td>
+                  <td style={styles.td}>{report.category_name || "-"}</td>
 
-                  <td style={tdStyle}>
+                  <td style={styles.td}>
                     <span
                       style={{
-                        padding: "5px 10px",
-                        borderRadius: 999,
+                        ...styles.badge,
                         background: status.bg,
                         color: status.color,
-                        fontSize: 12,
-                        fontWeight: 700,
                       }}
                     >
-                      {report.status}
+                      {status.label}
                     </span>
                   </td>
 
-                  <td style={tdStyle}>
-                    {new Date(report.created_at).toLocaleDateString(
-                      "id-ID"
-                    )}
+                  <td style={styles.td}>
+                    {new Date(report.created_at).toLocaleDateString("id-ID")}
                   </td>
 
-                  <td style={tdStyle}>
+                  <td style={styles.td}>
                     <Link
                       href={`/superadmin/reports/${report.id}`}
-                      style={viewBtn}
+                      style={styles.viewBtn}
                     >
                       <Eye size={16} />
                     </Link>
@@ -141,78 +180,97 @@ export default function SuperAdminReportsPage() {
         </table>
 
         {filteredReports.length === 0 && (
-          <div style={emptyState}>Tidak ada laporan ditemukan.</div>
+          <div style={styles.empty}>Tidak ada laporan ditemukan.</div>
         )}
       </div>
     </div>
   );
 }
 
-// ============================================================
-// STYLE
-// ============================================================
-const titleStyle = {
-  fontSize: 28,
-  fontWeight: 800,
-  color: "#001f3d",
-};
-
-const subtitleStyle = {
-  color: "#64748b",
-};
-
-const searchBox = {
-  display: "flex",
-  alignItems: "center",
-  gap: 10,
-  background: "#fff",
-  padding: "12px 16px",
-  borderRadius: 14,
-  border: "1px solid #e2e8f0",
-};
-
-const searchInput = {
-  border: "none",
-  outline: "none",
-  width: "100%",
-  fontSize: 14,
-};
-
-const tableWrap = {
-  background: "#fff",
-  borderRadius: 20,
-  overflow: "hidden",
-  border: "1px solid #e2e8f0",
-};
-
-const tableStyle = {
-  width: "100%",
-  borderCollapse: "collapse",
-};
-
-const thStyle = {
-  textAlign: "left",
-  padding: 16,
-  fontSize: 13,
-  color: "#475569",
-};
-
-const tdStyle = {
-  padding: 16,
-  borderTop: "1px solid #f1f5f9",
-  fontSize: 14,
-};
-
-const viewBtn = {
-  display: "inline-flex",
-  padding: 8,
-  borderRadius: 10,
-  background: "#eef6ff",
-  color: "#004b8d",
-};
-
-const emptyState = {
-  padding: 30,
-  textAlign: "center",
-  color: "#64748b",
+const styles = {
+  loadingWrap: {
+    minHeight: "60vh",
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  title: { fontSize: 28, fontWeight: 800, color: "#001f3d", margin: 0 },
+  subtitle: { color: "#3a5068", fontSize: 14, marginTop: 4 },
+  statsCard: {
+    background: "#fff",
+    borderRadius: 16,
+    padding: "16px 20px",
+    border: "1px solid rgba(0,75,141,0.08)",
+    display: "flex",
+    alignItems: "center",
+    gap: 14,
+  },
+  statsLabel: { fontSize: 12, color: "#3a5068", margin: 0 },
+  statsValue: {
+    fontSize: 24,
+    fontWeight: 800,
+    color: "#001f3d",
+    margin: 0,
+  },
+  searchBox: {
+    display: "flex",
+    alignItems: "center",
+    gap: 10,
+    background: "#fff",
+    padding: "12px 16px",
+    borderRadius: 14,
+    border: "1px solid rgba(0,75,141,0.08)",
+  },
+  searchInput: {
+    border: "none",
+    outline: "none",
+    width: "100%",
+    fontSize: 14,
+    fontFamily: "'Inter', system-ui",
+  },
+  tableWrap: {
+    background: "#fff",
+    borderRadius: 20,
+    overflow: "auto",
+    border: "1px solid rgba(0,75,141,0.08)",
+  },
+  table: {
+    width: "100%",
+    borderCollapse: "collapse",
+    minWidth: 700,
+  },
+  th: {
+    textAlign: "left",
+    padding: 16,
+    background: "#f8f9ff",
+    fontSize: 13,
+    fontWeight: 600,
+    color: "#001f3d",
+  },
+  td: {
+    padding: 16,
+    borderTop: "1px solid #f1f1e6",
+    fontSize: 14,
+    color: "#001f3d",
+  },
+  badge: {
+    padding: "5px 12px",
+    borderRadius: 40,
+    fontSize: 12,
+    fontWeight: 600,
+    display: "inline-block",
+  },
+  viewBtn: {
+    display: "inline-flex",
+    padding: 8,
+    borderRadius: 10,
+    background: "#e8f5ff",
+    color: "#004b8d",
+    textDecoration: "none",
+  },
+  empty: {
+    padding: 48,
+    textAlign: "center",
+    color: "#3a5068",
+  },
 };
