@@ -42,6 +42,9 @@ export default function AdminReportDetailPage() {
   const [updating, setUpdating] = useState(false);
   const [sendingComment, setSendingComment] = useState(false);
 
+  const [categories, setCategories] = useState([]);
+  const [selectedCategory, setSelectedCategory] = useState("");
+
   // ======================================================
   // FETCH REPORT DETAIL
   // ======================================================
@@ -77,6 +80,7 @@ export default function AdminReportDetailPage() {
       setReport(data.report);
       setTimeline(data.timeline || []);
       setNewStatus(data.report.status);
+      setSelectedCategory(data.report.category_id || "");
     } catch (err) {
       console.error(err);
     }
@@ -108,6 +112,18 @@ export default function AdminReportDetailPage() {
     }
   };
 
+  const fetchCategories = async () => {
+  try {
+    const res = await fetch(`${API}/reports/categories`);
+
+    const data = await res.json();
+
+    setCategories(data);
+  } catch (err) {
+    console.error(err);
+  }
+};
+
   // ======================================================
   // INITIAL LOAD
   // ======================================================
@@ -120,6 +136,7 @@ export default function AdminReportDetailPage() {
       await Promise.all([
         fetchDetail(),
         fetchComments(),
+        fetchCategories(),
       ]);
 
       setLoading(false);
@@ -145,6 +162,7 @@ export default function AdminReportDetailPage() {
         },
         body: JSON.stringify({
           new_status: newStatus,
+          category_id: selectedCategory || null,
           notes: notes || `Status diubah menjadi ${newStatus}`,
         }),
       });
@@ -369,6 +387,20 @@ export default function AdminReportDetailPage() {
           <option value="tindak_lanjut">Tindak Lanjut</option>
           <option value="selesai">Selesai</option>
           <option value="rejected">Ditolak</option>
+        </select>
+
+        <select
+          value={selectedCategory}
+          onChange={(e) => setSelectedCategory(e.target.value)}
+          style={styles.select}
+        >
+          <option value="">Pilih Kategori</option>
+
+          {categories.map((cat) => (
+            <option key={cat.id} value={cat.id}>
+              {cat.category_name}
+            </option>
+          ))}
         </select>
 
         <textarea

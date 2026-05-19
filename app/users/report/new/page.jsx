@@ -13,13 +13,11 @@ const API = "http://localhost:5000/api";
 export default function CreateReportPage() {
   const router = useRouter();
 
-  const [categories, setCategories] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(fakse);
   const [submitting, setSubmitting] = useState(false);
   const [uploadStatus, setUploadStatus] = useState({ type: "", message: "" });
 
   const [formData, setFormData] = useState({
-    category_id: "",
     title: "",
     description: "",
     incident_location: "",
@@ -29,22 +27,6 @@ export default function CreateReportPage() {
 
   const [previewName, setPreviewName] = useState("");
   const [previewUrl, setPreviewUrl] = useState("");
-
-  useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const res = await fetch(`${API}/reports/categories`);
-        const data = await res.json();
-        setCategories(data);
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchCategories();
-  }, []);
 
   const handleChange = (e) => {
     const { name, value, files } = e.target;
@@ -94,7 +76,6 @@ export default function CreateReportPage() {
     try {
       const body = new FormData();
 
-      body.append("category_id", formData.category_id);
       body.append("title", formData.title);
       body.append("description", formData.description);
       body.append("incident_location", formData.incident_location);
@@ -213,24 +194,6 @@ export default function CreateReportPage() {
             gap: 22,
           }}
         >
-          {/* Category */}
-          <div>
-            <label style={labelStyle}>Kategori Laporan</label>
-            <select
-              name="category_id"
-              value={formData.category_id}
-              onChange={handleChange}
-              required
-              style={inputStyle}
-            >
-              <option value="">Pilih kategori</option>
-              {categories.map((cat) => (
-                <option key={cat.id} value={cat.id}>
-                  {cat.category_name}
-                </option>
-              ))}
-            </select>
-          </div>
 
           {/* Title */}
           <div>

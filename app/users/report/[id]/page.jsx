@@ -203,8 +203,18 @@ export default function UserReportDetailPage() {
           <p style={styles.desc}>{report.description}</p>
         </div>
 
-        <div style={styles.metaGrid}>
-          <MetaItem icon={<ShieldAlert size={16} />} label="Kategori" value={report.category_name || "-"} />
+        <div style={styles.metaGrid}><MetaItem
+  icon={<ShieldAlert size={16} />}
+  label="Kategori"
+  value={
+    <span>
+      {report.category_name || "-"}
+      <span style={{ fontSize: 10, marginLeft: 6, color: "#8a9bb0", fontWeight: 500 }}>
+        (ditentukan admin)
+      </span>
+    </span>
+  }
+/>
           <MetaItem icon={<MapPin size={16} />} label="Lokasi Kejadian" value={report.incident_location || "-"} />
           <MetaItem icon={<Calendar size={16} />} label="Tanggal Kejadian" value={formatDate(report.incident_date)} />
           <MetaItem icon={<Clock size={16} />} label="Dibuat Pada" value={formatDateTime(report.created_at)} />
