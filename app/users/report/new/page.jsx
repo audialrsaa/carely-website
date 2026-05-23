@@ -1,6 +1,3 @@
-// ============================================================
-// app/users/report/new/page.jsx — CREATE REPORT USER
-// ============================================================
 "use client";
 
 import { useEffect, useState } from "react";
@@ -13,7 +10,7 @@ const API = "http://localhost:5000/api";
 export default function CreateReportPage() {
   const router = useRouter();
 
-  const [loading, setLoading] = useState(fakse);
+  const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [uploadStatus, setUploadStatus] = useState({ type: "", message: "" });
 
@@ -28,37 +25,53 @@ export default function CreateReportPage() {
   const [previewName, setPreviewName] = useState("");
   const [previewUrl, setPreviewUrl] = useState("");
 
-  const handleChange = (e) => {
-    const { name, value, files } = e.target;
+const handleChange = (e) => {
+  const { name, value, files } = e.target;
 
-    if (files && files[0]) {
-      const file = files[0];
-      
-      if (!file.type.startsWith('image/')) {
-        setUploadStatus({ type: "error", message: "File harus berupa gambar" });
-        return;
-      }
-      
-      if (file.size > 5 * 1024 * 1024) {
-        setUploadStatus({ type: "error", message: "Ukuran file maksimal 5MB" });
-        return;
-      }
+  // Input file
+  if (files && files.length > 0) {
+    const file = files[0];
 
-      setFormData((prev) => ({
-        ...prev,
-        [name]: file,
-      }));
-
-      setPreviewName(file.name);
-      
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setPreviewUrl(reader.result);
-      };
-      reader.readAsDataURL(file);
-      setUploadStatus({ type: "", message: "" });
+    if (!file.type.startsWith("image/")) {
+      setUploadStatus({
+        type: "error",
+        message: "File harus berupa gambar",
+      });
+      return;
     }
-  };
+
+    if (file.size > 5 * 1024 * 1024) {
+      setUploadStatus({
+        type: "error",
+        message: "Ukuran file maksimal 5MB",
+      });
+      return;
+    }
+
+    setFormData((prev) => ({
+      ...prev,
+      [name]: file,
+    }));
+
+    setPreviewName(file.name);
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setPreviewUrl(reader.result);
+    };
+    reader.readAsDataURL(file);
+
+    setUploadStatus({ type: "", message: "" });
+
+    return;
+  }
+
+  // Input text, textarea, date
+  setFormData((prev) => ({
+    ...prev,
+    [name]: value,
+  }));
+};
 
   const handleSubmit = async (e) => {
     e.preventDefault();
