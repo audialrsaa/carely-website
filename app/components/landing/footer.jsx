@@ -131,7 +131,7 @@ export default function Footer() {
             textAlign: 'center',
           }}
         >
-          © {new Date().getFullYear()} Care for Her &amp; Child. Lindungi Diri, Berdayakan Sesama.
+          © {new Date().getFullYear()} Carely. Lindungi Diri, Berdayakan Sesama.
         </p>
       </div>
     </footer>

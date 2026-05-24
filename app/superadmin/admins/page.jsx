@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Trash2, Plus } from "lucide-react";
+import { Trash2, Plus, User, Mail, Phone, Lock, Calendar, AlertCircle, X } from "lucide-react";
 import Swal from "sweetalert2";
 
 const API = "http://localhost:5000/api";
@@ -9,6 +9,8 @@ const API = "http://localhost:5000/api";
 export default function SuperAdminAdminsPage() {
   const [admins, setAdmins] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [showModal, setShowModal] = useState(false);
 
   const [form, setForm] = useState({
     full_name: "",
@@ -17,9 +19,6 @@ export default function SuperAdminAdminsPage() {
     phone: "",
   });
 
-  // =====================================================
-  // FETCH ADMINS
-  // =====================================================
   const fetchAdmins = async () => {
     try {
       const token = localStorage.getItem("token");
@@ -31,11 +30,9 @@ export default function SuperAdminAdminsPage() {
       });
 
       const data = await res.json();
-
       setAdmins(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error(err);
-
       Swal.fire({
         icon: "error",
         title: "Gagal",
@@ -46,23 +43,36 @@ export default function SuperAdminAdminsPage() {
     }
   };
 
-  // =====================================================
-  // CREATE ADMIN
-  // =====================================================
+  const resetForm = () => {
+    setForm({
+      full_name: "",
+      email: "",
+      password: "",
+      phone: "",
+    });
+  };
+
+  const handleOpenModal = () => {
+    resetForm();
+    setShowModal(true);
+  };
+
+  const handleCloseModal = () => {
+    setShowModal(false);
+    resetForm();
+  };
+
   const createAdmin = async () => {
-    // VALIDASI
-    if (
-      !form.full_name.trim() ||
-      !form.email.trim() ||
-      !form.password.trim() ||
-      !form.phone.trim()
-    ) {
-      return Swal.fire({
+    if (!form.full_name.trim() || !form.email.trim() || !form.password.trim() || !form.phone.trim()) {
+      Swal.fire({
         icon: "warning",
         title: "Field wajib diisi",
         text: "Semua field harus diisi",
       });
+      return;
     }
+
+    setSubmitting(true);
 
     try {
       const token = localStorage.getItem("token");
@@ -78,16 +88,15 @@ export default function SuperAdminAdminsPage() {
 
       const data = await res.json();
 
-      // ERROR BACKEND
       if (!res.ok) {
-        return Swal.fire({
+        Swal.fire({
           icon: "error",
           title: "Gagal",
           text: data.message || "Gagal membuat admin",
         });
+        return;
       }
 
-      // SUCCESS
       Swal.fire({
         icon: "success",
         title: "Berhasil",
@@ -96,33 +105,24 @@ export default function SuperAdminAdminsPage() {
         showConfirmButton: false,
       });
 
-      // RESET FORM
-      setForm({
-        full_name: "",
-        email: "",
-        password: "",
-        phone: "",
-      });
-
+      handleCloseModal();
       fetchAdmins();
     } catch (err) {
       console.error(err);
-
       Swal.fire({
         icon: "error",
         title: "Server Error",
         text: "Terjadi kesalahan",
       });
+    } finally {
+      setSubmitting(false);
     }
   };
 
-  // =====================================================
-  // DELETE ADMIN
-  // =====================================================
-  const deleteAdmin = async (id) => {
+  const deleteAdmin = async (id, name) => {
     const result = await Swal.fire({
       title: "Hapus admin?",
-      text: "Admin akan dihapus permanen",
+      html: `Admin <strong>${name}</strong> akan dihapus permanen`,
       icon: "warning",
       showCancelButton: true,
       confirmButtonColor: "#dc2626",
@@ -164,7 +164,6 @@ export default function SuperAdminAdminsPage() {
       fetchAdmins();
     } catch (err) {
       console.error(err);
-
       Swal.fire({
         icon: "error",
         title: "Server Error",
@@ -173,262 +172,562 @@ export default function SuperAdminAdminsPage() {
     }
   };
 
-  // =====================================================
-  // USE EFFECT
-  // =====================================================
   useEffect(() => {
     fetchAdmins();
   }, []);
 
-  // =====================================================
-  // LOADING
-  // =====================================================
   if (loading) {
     return (
-      <div style={loadingStyle}>
-        <div style={spinner}></div>
+      <div style={styles.loadingWrap}>
+        <div style={styles.loadingCard}>
+          <div style={styles.spinner}></div>
+          <p style={styles.loadingText}>Memuat data admin...</p>
+        </div>
+        <style>{`
+          @keyframes spin {
+            to { transform: rotate(360deg); }
+          }
+        `}</style>
       </div>
     );
   }
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
-      {/* HEADER */}
-      <div>
-        <h1 style={titleStyle}>
-          Manajemen Admin
-        </h1>
-
-        <p style={subtitleStyle}>
-          Tambah dan kelola akun admin Carely
-        </p>
-      </div>
-
-      {/* FORM */}
-      <div style={formCard}>
-        <input
-          placeholder="Nama Lengkap"
-          value={form.full_name}
-          onChange={(e) =>
-            setForm({
-              ...form,
-              full_name: e.target.value,
-            })
-          }
-          style={inputStyle}
-        />
-
-        <input
-          placeholder="Email"
-          value={form.email}
-          onChange={(e) =>
-            setForm({
-              ...form,
-              email: e.target.value,
-            })
-          }
-          style={inputStyle}
-        />
-
-        <input
-          placeholder="Password"
-          type="password"
-          value={form.password}
-          onChange={(e) =>
-            setForm({
-              ...form,
-              password: e.target.value,
-            })
-          }
-          style={inputStyle}
-        />
-
-        <input
-          placeholder="Nomor HP"
-          value={form.phone}
-          onChange={(e) =>
-            setForm({
-              ...form,
-              phone: e.target.value,
-            })
-          }
-          style={inputStyle}
-        />
-
-        <button
-          onClick={createAdmin}
-          style={createBtn}
-        >
+    <div style={styles.container}>
+      {/* Header */}
+      <div style={styles.header}>
+        <div>
+          <div style={styles.headerBadge}>Super Admin Dashboard</div>
+          <h1 style={styles.title}>Manajemen Admin</h1>
+          <p style={styles.subtitle}>Kelola akun admin yang memiliki akses ke sistem</p>
+        </div>
+        <button onClick={handleOpenModal} style={styles.addButton}>
           <Plus size={18} />
           Tambah Admin
         </button>
       </div>
 
-      {/* TABLE */}
-      <div style={tableCard}>
-        <table style={tableStyle}>
-          <thead style={theadStyle}>
-            <tr>
-              <th style={thStyle}>Nama</th>
-              <th style={thStyle}>Email</th>
-              <th style={thStyle}>Phone</th>
-              <th style={thStyle}>Tanggal Dibuat</th>
-              <th style={thStyle}>Aksi</th>
-            </tr>
-          </thead>
+      {/* Stats Card */}
+      <div style={styles.statsCard}>
+        <div style={styles.statsIcon}>
+          <User size={24} color="#2563EB" />
+        </div>
+        <div>
+          <p style={styles.statsLabel}>Total Admin</p>
+          <h2 style={styles.statsValue}>{admins.length}</h2>
+        </div>
+      </div>
 
-          <tbody>
-            {admins.length > 0 ? (
-              admins.map((admin) => (
-                <tr key={admin.id}>
-                  <td style={tdStyle}>
-                    {admin.full_name}
-                  </td>
+      {/* Table Card */}
+      <div style={styles.tableCard}>
+        <div style={styles.tableHeader}>
+          <h3 style={styles.tableTitle}>Daftar Admin</h3>
+          <p style={styles.tableSubtitle}>Menampilkan {admins.length} admin terdaftar</p>
+        </div>
 
-                  <td style={tdStyle}>
-                    {admin.email}
-                  </td>
-
-                  <td style={tdStyle}>
-                    {admin.phone || "-"}
-                  </td>
-
-                  <td style={tdStyle}>
-                    {new Date(
-                      admin.created_at
-                    ).toLocaleDateString("id-ID")}
-                  </td>
-
-                  <td style={tdStyle}>
-                    <button
-                      onClick={() =>
-                        deleteAdmin(admin.id)
-                      }
-                      style={deleteBtn}
-                    >
-                      <Trash2 size={16} />
-                    </button>
+        <div style={styles.tableWrapper}>
+          <table style={styles.table}>
+            <thead>
+              <tr>
+                <th style={styles.th}>Nama</th>
+                <th style={styles.th}>Email</th>
+                <th style={styles.th}>Nomor HP</th>
+                <th style={styles.th}>Tanggal Dibuat</th>
+                <th style={styles.th}>Aksi</th>
+              </tr>
+            </thead>
+            <tbody>
+              {admins.length > 0 ? (
+                admins.map((admin, index) => (
+                  <tr key={admin.id} style={index % 2 === 0 ? styles.rowEven : styles.rowOdd}>
+                    <td style={styles.td}>
+                      <div style={styles.adminName}>
+                        <div style={styles.avatar}>
+                          {admin.full_name?.charAt(0) || "A"}
+                        </div>
+                        <span>{admin.full_name}</span>
+                      </div>
+                    </td>
+                    <td style={styles.td}>{admin.email}</td>
+                    <td style={styles.td}>{admin.phone || "-"}</td>
+                    <td style={styles.td}>
+                      <div style={styles.dateCell}>
+                        <Calendar size={14} color="#9CA3AF" />
+                        {new Date(admin.created_at).toLocaleDateString("id-ID", {
+                          day: "numeric",
+                          month: "long",
+                          year: "numeric",
+                        })}
+                      </div>
+                    </td>
+                    <td style={styles.td}>
+                      <button
+                        onClick={() => deleteAdmin(admin.id, admin.full_name)}
+                        style={styles.deleteBtn}
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={5} style={styles.emptyState}>
+                    <AlertCircle size={48} color="#D1D5DB" />
+                    <p style={styles.emptyText}>Belum ada admin</p>
+                    <p style={styles.emptySubtext}>Klik tombol "Tambah Admin" untuk menambahkan</p>
                   </td>
                 </tr>
-              ))
-            ) : (
-              <tr>
-                <td
-                  colSpan={5}
-                  style={{
-                    padding: 30,
-                    textAlign: "center",
-                    color: "#64748b",
-                  }}
-                >
-                  Belum ada admin
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
+
+      {/* Modal Popup */}
+      {showModal && (
+        <div style={styles.modalOverlay} onClick={handleCloseModal}>
+          <div style={styles.modal} onClick={(e) => e.stopPropagation()}>
+            <div style={styles.modalHeader}>
+              <h2 style={styles.modalTitle}>Tambah Admin Baru</h2>
+              <button onClick={handleCloseModal} style={styles.modalClose}>
+                <X size={20} />
+              </button>
+            </div>
+
+            <div style={styles.modalBody}>
+              <div style={styles.inputGroup}>
+                <label style={styles.label}>Nama Lengkap</label>
+                <div style={styles.inputWrapper}>
+                  <User size={18} color="#9CA3AF" />
+                  <input
+                    placeholder="Masukkan nama lengkap"
+                    value={form.full_name}
+                    onChange={(e) => setForm({ ...form, full_name: e.target.value })}
+                    style={styles.input}
+                  />
+                </div>
+              </div>
+
+              <div style={styles.inputGroup}>
+                <label style={styles.label}>Email</label>
+                <div style={styles.inputWrapper}>
+                  <Mail size={18} color="#9CA3AF" />
+                  <input
+                    type="email"
+                    placeholder="Masukkan email"
+                    value={form.email}
+                    onChange={(e) => setForm({ ...form, email: e.target.value })}
+                    style={styles.input}
+                  />
+                </div>
+              </div>
+
+              <div style={styles.inputGroup}>
+                <label style={styles.label}>Password</label>
+                <div style={styles.inputWrapper}>
+                  <Lock size={18} color="#9CA3AF" />
+                  <input
+                    type="password"
+                    placeholder="Masukkan password"
+                    value={form.password}
+                    onChange={(e) => setForm({ ...form, password: e.target.value })}
+                    style={styles.input}
+                  />
+                </div>
+              </div>
+
+              <div style={styles.inputGroup}>
+                <label style={styles.label}>Nomor HP</label>
+                <div style={styles.inputWrapper}>
+                  <Phone size={18} color="#9CA3AF" />
+                  <input
+                    placeholder="Masukkan nomor HP"
+                    value={form.phone}
+                    onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                    style={styles.input}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div style={styles.modalFooter}>
+              <button onClick={handleCloseModal} style={styles.cancelBtn}>
+                Batal
+              </button>
+              <button onClick={createAdmin} disabled={submitting} style={styles.saveBtn}>
+                {submitting ? (
+                  <>
+                    <div style={styles.btnSpinner}></div>
+                    Menyimpan...
+                  </>
+                ) : (
+                  "Simpan Admin"
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
-// =====================================================
-// STYLES
-// =====================================================
-
-const loadingStyle = {
-  minHeight: "60vh",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-};
-
-const spinner = {
-  width: 40,
-  height: 40,
-  border: "4px solid #cbd5e1",
-  borderTop: "4px solid #004b8d",
-  borderRadius: "50%",
-  animation: "spin 1s linear infinite",
-};
-
-const titleStyle = {
-  fontSize: 30,
-  fontWeight: 800,
-  color: "#001f3d",
-};
-
-const subtitleStyle = {
-  color: "#64748b",
-  marginTop: 6,
-};
-
-const formCard = {
-  background: "#fff",
-  padding: 24,
-  borderRadius: 24,
-  border: "1px solid #e2e8f0",
-  display: "grid",
-  gridTemplateColumns: "repeat(2, 1fr)",
-  gap: 16,
-};
-
-const inputStyle = {
-  padding: "14px 16px",
-  borderRadius: 14,
-  border: "1px solid #cbd5e1",
-  outline: "none",
-  fontSize: 14,
-};
-
-const createBtn = {
-  gridColumn: "span 2",
-  padding: 16,
-  borderRadius: 14,
-  border: "none",
-  background: "#004b8d",
-  color: "#fff",
-  fontWeight: 700,
-  cursor: "pointer",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  gap: 8,
-};
-
-const tableCard = {
-  background: "#fff",
-  borderRadius: 24,
-  overflow: "hidden",
-  border: "1px solid #e2e8f0",
-};
-
-const tableStyle = {
-  width: "100%",
-  borderCollapse: "collapse",
-};
-
-const theadStyle = {
-  background: "#f8fafc",
-};
-
-const thStyle = {
-  textAlign: "left",
-  padding: 18,
-  fontSize: 13,
-  color: "#475569",
-};
-
-const tdStyle = {
-  padding: 18,
-  borderTop: "1px solid #f1f5f9",
-};
-
-const deleteBtn = {
-  border: "none",
-  background: "#fef2f2",
-  color: "#dc2626",
-  padding: 10,
-  borderRadius: 10,
-  cursor: "pointer",
+const styles = {
+  container: {
+    maxWidth: 1200,
+    margin: "0 auto",
+    padding: "32px 24px",
+    background: "#F9FAFB",
+    minHeight: "100vh",
+  },
+  loadingWrap: {
+    minHeight: "100vh",
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    background: "#F9FAFB",
+  },
+  loadingCard: {
+    textAlign: "center",
+    background: "#fff",
+    padding: "48px",
+    borderRadius: 24,
+    boxShadow: "0 4px 6px -1px rgba(0,0,0,0.1)",
+  },
+  spinner: {
+    width: 40,
+    height: 40,
+    borderWidth: 4,
+    borderStyle: "solid",
+    borderColor: "#E5E7EB",
+    borderTopColor: "#2563EB",
+    borderRadius: "50%",
+    animation: "spin 1s linear infinite",
+    margin: "0 auto",
+  },
+  loadingText: {
+    marginTop: 16,
+    color: "#6B7280",
+    fontSize: 14,
+  },
+  header: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    marginBottom: 24,
+    flexWrap: "wrap",
+    gap: 16,
+  },
+  headerBadge: {
+    fontSize: 12,
+    fontWeight: 600,
+    color: "#2563EB",
+    textTransform: "uppercase",
+    letterSpacing: "0.5px",
+    marginBottom: 8,
+  },
+  title: {
+    fontSize: 32,
+    fontWeight: 800,
+    color: "#111827",
+    margin: 0,
+    marginBottom: 8,
+  },
+  subtitle: {
+    color: "#6B7280",
+    fontSize: 14,
+    margin: 0,
+  },
+  addButton: {
+    display: "flex",
+    alignItems: "center",
+    gap: 8,
+    padding: "10px 20px",
+    background: "#2563EB",
+    color: "#fff",
+    border: "none",
+    borderRadius: 12,
+    fontSize: 14,
+    fontWeight: 600,
+    cursor: "pointer",
+    transition: "all 0.2s",
+  },
+  statsCard: {
+    background: "#fff",
+    borderRadius: 16,
+    padding: "20px 24px",
+    marginBottom: 24,
+    display: "flex",
+    alignItems: "center",
+    gap: 16,
+    borderWidth: 1,
+    borderStyle: "solid",
+    borderColor: "#E5E7EB",
+  },
+  statsIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 12,
+    background: "#EFF6FF",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  statsLabel: {
+    fontSize: 13,
+    color: "#6B7280",
+    margin: 0,
+    marginBottom: 4,
+  },
+  statsValue: {
+    fontSize: 28,
+    fontWeight: 800,
+    color: "#111827",
+    margin: 0,
+  },
+  tableCard: {
+    background: "#fff",
+    borderRadius: 20,
+    borderWidth: 1,
+    borderStyle: "solid",
+    borderColor: "#E5E7EB",
+    overflow: "hidden",
+  },
+  tableHeader: {
+    padding: "20px 24px",
+    borderBottomWidth: 1,
+    borderBottomStyle: "solid",
+    borderBottomColor: "#E5E7EB",
+  },
+  tableTitle: {
+    fontSize: 16,
+    fontWeight: 600,
+    color: "#111827",
+    margin: 0,
+    marginBottom: 4,
+  },
+  tableSubtitle: {
+    fontSize: 13,
+    color: "#6B7280",
+    margin: 0,
+  },
+  tableWrapper: {
+    overflowX: "auto",
+  },
+  table: {
+    width: "100%",
+    borderCollapse: "collapse",
+    minWidth: 600,
+  },
+  th: {
+    textAlign: "left",
+    padding: "16px 20px",
+    background: "#F9FAFB",
+    fontSize: 13,
+    fontWeight: 600,
+    color: "#6B7280",
+    borderBottomWidth: 1,
+    borderBottomStyle: "solid",
+    borderBottomColor: "#E5E7EB",
+  },
+  td: {
+    padding: "16px 20px",
+    fontSize: 14,
+    color: "#111827",
+    borderBottomWidth: 1,
+    borderBottomStyle: "solid",
+    borderBottomColor: "#F3F4F6",
+  },
+  rowEven: {
+    background: "#fff",
+  },
+  rowOdd: {
+    background: "#F9FAFB",
+  },
+  adminName: {
+    display: "flex",
+    alignItems: "center",
+    gap: 10,
+  },
+  avatar: {
+    width: 32,
+    height: 32,
+    borderRadius: "50%",
+    background: "linear-gradient(135deg, #667EEA 0%, #764BA2 100%)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    color: "#fff",
+    fontSize: 12,
+    fontWeight: 600,
+  },
+  dateCell: {
+    display: "flex",
+    alignItems: "center",
+    gap: 8,
+    fontSize: 13,
+    color: "#6B7280",
+  },
+  deleteBtn: {
+    display: "inline-flex",
+    alignItems: "center",
+    gap: 6,
+    padding: "8px 12px",
+    background: "#FEE2E2",
+    color: "#DC2626",
+    border: "none",
+    borderRadius: 8,
+    cursor: "pointer",
+    transition: "all 0.2s",
+  },
+  emptyState: {
+    padding: "64px 24px",
+    textAlign: "center",
+  },
+  emptyText: {
+    fontSize: 16,
+    fontWeight: 500,
+    color: "#111827",
+    marginTop: 16,
+    marginBottom: 4,
+  },
+  emptySubtext: {
+    fontSize: 14,
+    color: "#6B7280",
+    margin: 0,
+  },
+  // Modal Styles
+  modalOverlay: {
+    position: "fixed",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    background: "rgba(0, 0, 0, 0.5)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 1000,
+    backdropFilter: "blur(4px)",
+  },
+  modal: {
+    background: "#fff",
+    borderRadius: 24,
+    width: "90%",
+    maxWidth: 500,
+    maxHeight: "90vh",
+    overflow: "auto",
+    boxShadow: "0 20px 25px -5px rgba(0,0,0,0.1)",
+  },
+  modalHeader: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: "20px 24px",
+    borderBottomWidth: 1,
+    borderBottomStyle: "solid",
+    borderBottomColor: "#E5E7EB",
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 700,
+    color: "#111827",
+    margin: 0,
+  },
+  modalClose: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    background: "transparent",
+    border: "none",
+    color: "#6B7280",
+    cursor: "pointer",
+    transition: "all 0.2s",
+  },
+  modalBody: {
+    padding: "24px",
+    display: "flex",
+    flexDirection: "column",
+    gap: 20,
+  },
+  inputGroup: {
+    display: "flex",
+    flexDirection: "column",
+    gap: 8,
+  },
+  label: {
+    fontSize: 13,
+    fontWeight: 600,
+    color: "#374151",
+  },
+  inputWrapper: {
+    display: "flex",
+    alignItems: "center",
+    gap: 12,
+    padding: "12px 16px",
+    background: "#F9FAFB",
+    borderRadius: 12,
+    borderWidth: 1,
+    borderStyle: "solid",
+    borderColor: "#E5E7EB",
+    transition: "all 0.2s",
+  },
+  input: {
+    flex: 1,
+    border: "none",
+    background: "transparent",
+    outline: "none",
+    fontSize: 14,
+    fontFamily: "'Inter', system-ui",
+  },
+  modalFooter: {
+    display: "flex",
+    gap: 12,
+    padding: "20px 24px",
+    borderTopWidth: 1,
+    borderTopStyle: "solid",
+    borderTopColor: "#E5E7EB",
+  },
+  cancelBtn: {
+    flex: 1,
+    padding: "12px 16px",
+    background: "#F3F4F6",
+    color: "#6B7280",
+    border: "none",
+    borderRadius: 12,
+    fontSize: 14,
+    fontWeight: 600,
+    cursor: "pointer",
+    transition: "all 0.2s",
+  },
+  saveBtn: {
+    flex: 1,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    padding: "12px 16px",
+    background: "#2563EB",
+    color: "#fff",
+    border: "none",
+    borderRadius: 12,
+    fontSize: 14,
+    fontWeight: 600,
+    cursor: "pointer",
+    transition: "all 0.2s",
+  },
+  btnSpinner: {
+    width: 16,
+    height: 16,
+    borderWidth: 2,
+    borderStyle: "solid",
+    borderColor: "#fff",
+    borderTopColor: "transparent",
+    borderRadius: "50%",
+    animation: "spin 1s linear infinite",
+  },
 };

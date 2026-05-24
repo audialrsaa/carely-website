@@ -2,7 +2,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Trash2, Search, Users, Loader2, UserCheck } from "lucide-react";
+import { Trash2, Search, Users, Loader2, UserCheck, Calendar, Mail, Phone, AlertCircle } from "lucide-react";
+import Swal from "sweetalert2";
 
 const API = "http://localhost:5000/api";
 
@@ -18,25 +19,66 @@ export default function SuperAdminUsersPage() {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
-      setUsers(data);
+      setUsers(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error("Fetch Users Error:", err);
+      Swal.fire({
+        icon: "error",
+        title: "Gagal",
+        text: "Gagal mengambil data user",
+      });
     } finally {
       setLoading(false);
     }
   };
 
-  const deleteUser = async (id) => {
-    if (!confirm("Yakin ingin menghapus user ini?")) return;
+  const deleteUser = async (id, name) => {
+    const result = await Swal.fire({
+      title: "Hapus user?",
+      html: `User <strong>${name}</strong> akan dihapus permanen`,
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#dc2626",
+      cancelButtonColor: "#64748b",
+      confirmButtonText: "Ya, hapus",
+      cancelButtonText: "Batal",
+    });
+
+    if (!result.isConfirmed) return;
+
     try {
       const token = localStorage.getItem("token");
-      await fetch(`${API}/admin/users/${id}`, {
+      const res = await fetch(`${API}/admin/users/${id}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
       });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        return Swal.fire({
+          icon: "error",
+          title: "Gagal",
+          text: data.message || "Gagal menghapus user",
+        });
+      }
+
+      Swal.fire({
+        icon: "success",
+        title: "Berhasil",
+        text: "User berhasil dihapus",
+        timer: 1800,
+        showConfirmButton: false,
+      });
+
       fetchUsers();
     } catch (err) {
       console.error("Delete User Error:", err);
+      Swal.fire({
+        icon: "error",
+        title: "Server Error",
+        text: "Terjadi kesalahan",
+      });
     }
   };
 
@@ -53,93 +95,446 @@ export default function SuperAdminUsersPage() {
   if (loading) {
     return (
       <div style={styles.loadingWrap}>
-        <Loader2 size={42} style={{ color: "#004b8d", animation: "spin 1s linear infinite" }} />
-        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+        <div style={styles.loadingCard}>
+          <div style={styles.spinner}></div>
+          <p style={styles.loadingText}>Memuat data user...</p>
+        </div>
+        <style>{`
+          @keyframes spin {
+            to { transform: rotate(360deg); }
+          }
+        `}</style>
       </div>
     );
   }
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+    <div style={styles.container}>
       {/* Header */}
-      <div>
-        <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 8 }}>
-          <Users size={28} color="#004b8d" />
-          <h1 style={styles.title}>Manajemen User</h1>
-        </div>
-        <p style={styles.subtitle}>Kelola seluruh akun user Carely</p>
-      </div>
-
-      {/* Stats */}
-      <div style={styles.statsCard}>
-        <UserCheck size={22} color="#004b8d" />
+      <div style={styles.header}>
         <div>
-          <p style={styles.statsLabel}>Total User Terdaftar</p>
-          <h2 style={styles.statsValue}>{users.length}</h2>
+          <div style={styles.headerBadge}>Super Admin Dashboard</div>
+          <h1 style={styles.title}>Manajemen User</h1>
+          <p style={styles.subtitle}>Kelola seluruh akun user yang terdaftar di Carely</p>
+        </div>
+        <div style={styles.statsBadge}>
+          <Users size={16} />
+          Total: {users.length}
         </div>
       </div>
 
-      {/* Search */}
-      <div style={styles.searchBox}>
-        <Search size={18} color="#8a9bb0" />
-        <input
-          type="text"
-          placeholder="Cari user berdasarkan nama atau email..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          style={styles.searchInput}
-        />
+      {/* Stats Cards */}
+      <div style={styles.statsGrid}>
+        <div style={styles.statCard}>
+          <div style={{ ...styles.statIcon, background: "#EFF6FF", color: "#2563EB" }}>
+            <Users size={24} />
+          </div>
+          <div>
+            <p style={styles.statLabel}>Total User</p>
+            <h3 style={styles.statValue}>{users.length}</h3>
+          </div>
+        </div>
+        <div style={styles.statCard}>
+          <div style={{ ...styles.statIcon, background: "#D1FAE5", color: "#059669" }}>
+            <UserCheck size={24} />
+          </div>
+          <div>
+            <p style={styles.statLabel}>User Aktif</p>
+            <h3 style={styles.statValue}>{users.filter(u => u.is_active !== false).length}</h3>
+          </div>
+        </div>
+        <div style={styles.statCard}>
+          <div style={{ ...styles.statIcon, background: "#FEF3C7", color: "#D97706" }}>
+            <Calendar size={24} />
+          </div>
+          <div>
+            <p style={styles.statLabel}>User Baru (Bulan Ini)</p>
+            <h3 style={styles.statValue}>
+              {users.filter(u => {
+                const created = new Date(u.created_at);
+                const now = new Date();
+                return created.getMonth() === now.getMonth() && created.getFullYear() === now.getFullYear();
+              }).length}
+            </h3>
+          </div>
+        </div>
       </div>
 
-      {/* Table */}
-      <div style={styles.tableWrap}>
-        <table style={styles.table}>
-          <thead>
-            <tr>
-              <th style={styles.th}>Nama</th>
-              <th style={styles.th}>Email</th>
-              <th style={styles.th}>Phone</th>
-              <th style={styles.th}>Tanggal Daftar</th>
-              <th style={styles.th}>Aksi</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredUsers.map((user) => (
-              <tr key={user.id}>
-                <td style={styles.td}>{user.full_name || "-"}</td>
-                <td style={styles.td}>{user.email}</td>
-                <td style={styles.td}>{user.phone || "-"}</td>
-                <td style={styles.td}>{new Date(user.created_at).toLocaleDateString("id-ID")}</td>
-                <td style={styles.td}>
-                  <button onClick={() => deleteUser(user.id)} style={styles.deleteBtn}>
-                    <Trash2 size={16} />
-                  </button>
-                </td>
+      {/* Search Section */}
+      <div style={styles.searchSection}>
+        <div style={styles.searchBox}>
+          <Search size={20} color="#9CA3AF" />
+          <input
+            type="text"
+            placeholder="Cari user berdasarkan nama atau email..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            style={styles.searchInput}
+          />
+        </div>
+        <p style={styles.searchResult}>
+          Menampilkan {filteredUsers.length} dari {users.length} user
+        </p>
+      </div>
+
+      {/* Table Card */}
+      <div style={styles.tableCard}>
+        <div style={styles.tableHeader}>
+          <h3 style={styles.tableTitle}>Daftar User</h3>
+          <p style={styles.tableSubtitle}>Semua user yang terdaftar di platform Carely</p>
+        </div>
+
+        <div style={styles.tableWrapper}>
+          <table style={styles.table}>
+            <thead>
+              <tr>
+                <th style={styles.th}>User</th>
+                <th style={styles.th}>Email</th>
+                <th style={styles.th}>Nomor HP</th>
+                <th style={styles.th}>Tanggal Daftar</th>
+                <th style={styles.th}>Aksi</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-        {filteredUsers.length === 0 && (
-          <div style={styles.empty}>Tidak ada user ditemukan.</div>
-        )}
+            </thead>
+            <tbody>
+              {filteredUsers.length > 0 ? (
+                filteredUsers.map((user, index) => (
+                  <tr key={user.id} style={index % 2 === 0 ? styles.rowEven : styles.rowOdd}>
+                    <td style={styles.td}>
+                      <div style={styles.userName}>
+                        <div style={styles.avatar}>
+                          {user.full_name?.charAt(0) || "U"}
+                        </div>
+                        <div>
+                          <span style={styles.name}>{user.full_name || "-"}</span>
+                        </div>
+                      </div>
+                    </td>
+                    <td style={styles.td}>
+                      <div style={styles.emailCell}>
+                        <Mail size={14} color="#9CA3AF" />
+                        {user.email}
+                      </div>
+                    </td>
+                    <td style={styles.td}>
+                      <div style={styles.phoneCell}>
+                        <Phone size={14} color="#9CA3AF" />
+                        {user.phone || "-"}
+                      </div>
+                    </td>
+                    <td style={styles.td}>
+                      <div style={styles.dateCell}>
+                        <Calendar size={14} color="#9CA3AF" />
+                        {new Date(user.created_at).toLocaleDateString("id-ID", {
+                          day: "numeric",
+                          month: "long",
+                          year: "numeric",
+                        })}
+                      </div>
+                    </td>
+                    <td style={styles.td}>
+                      <button
+                        onClick={() => deleteUser(user.id, user.full_name || user.email)}
+                        style={styles.deleteBtn}
+                      >
+                        <Trash2 size={16} />
+                        <span>Hapus</span>
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={5} style={styles.emptyState}>
+                    <AlertCircle size={48} color="#D1D5DB" />
+                    <p style={styles.emptyText}>Tidak ada user ditemukan</p>
+                    <p style={styles.emptySubtext}>
+                      {search ? "Coba dengan kata kunci yang berbeda" : "Belum ada user yang terdaftar"}
+                    </p>
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );
 }
 
 const styles = {
-  loadingWrap: { minHeight: "60vh", display: "flex", justifyContent: "center", alignItems: "center" },
-  title: { fontSize: 28, fontWeight: 800, color: "#001f3d", margin: 0 },
-  subtitle: { color: "#3a5068", fontSize: 14, marginTop: 4 },
-  statsCard: { background: "#fff", borderRadius: 16, padding: "16px 20px", border: "1px solid rgba(0,75,141,0.08)", display: "flex", alignItems: "center", gap: 14 },
-  statsLabel: { fontSize: 12, color: "#3a5068", margin: 0 },
-  statsValue: { fontSize: 24, fontWeight: 800, color: "#001f3d", margin: 0 },
-  searchBox: { display: "flex", alignItems: "center", gap: 10, background: "#fff", padding: "12px 16px", borderRadius: 14, border: "1px solid rgba(0,75,141,0.08)" },
-  searchInput: { border: "none", outline: "none", width: "100%", fontSize: 14, fontFamily: "'Inter', system-ui" },
-  tableWrap: { background: "#fff", borderRadius: 20, overflow: "hidden", border: "1px solid rgba(0,75,141,0.08)" },
-  table: { width: "100%", borderCollapse: "collapse" },
-  th: { textAlign: "left", padding: 16, background: "#f8f9ff", fontSize: 13, fontWeight: 600, color: "#001f3d" },
-  td: { padding: 16, borderTop: "1px solid #f1f1e6", fontSize: 14, color: "#001f3d" },
-  deleteBtn: { border: "none", background: "#fde8e8", color: "#c0392b", padding: 8, borderRadius: 10, cursor: "pointer", transition: "all 0.2s" },
-  empty: { padding: 48, textAlign: "center", color: "#3a5068" },
+  container: {
+    maxWidth: 1200,
+    margin: "0 auto",
+    padding: "32px 24px",
+    background: "#F9FAFB",
+    minHeight: "100vh",
+  },
+  loadingWrap: {
+    minHeight: "100vh",
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    background: "#F9FAFB",
+  },
+  loadingCard: {
+    textAlign: "center",
+    background: "#fff",
+    padding: "48px",
+    borderRadius: 24,
+    boxShadow: "0 4px 6px -1px rgba(0,0,0,0.1)",
+  },
+  spinner: {
+    width: 40,
+    height: 40,
+    borderWidth: 4,
+    borderStyle: "solid",
+    borderColor: "#E5E7EB",
+    borderTopColor: "#2563EB",
+    borderRadius: "50%",
+    animation: "spin 1s linear infinite",
+    margin: "0 auto",
+  },
+  loadingText: {
+    marginTop: 16,
+    color: "#6B7280",
+    fontSize: 14,
+  },
+  header: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    marginBottom: 32,
+    flexWrap: "wrap",
+    gap: 16,
+  },
+  headerBadge: {
+    fontSize: 12,
+    fontWeight: 600,
+    color: "#2563EB",
+    textTransform: "uppercase",
+    letterSpacing: "0.5px",
+    marginBottom: 8,
+  },
+  title: {
+    fontSize: 32,
+    fontWeight: 800,
+    color: "#111827",
+    margin: 0,
+    marginBottom: 8,
+  },
+  subtitle: {
+    color: "#6B7280",
+    fontSize: 14,
+    margin: 0,
+  },
+  statsBadge: {
+    display: "flex",
+    alignItems: "center",
+    gap: 8,
+    padding: "8px 16px",
+    background: "#fff",
+    borderRadius: 12,
+    fontSize: 13,
+    fontWeight: 600,
+    color: "#2563EB",
+    borderWidth: 1,
+    borderStyle: "solid",
+    borderColor: "#E5E7EB",
+  },
+  statsGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
+    gap: 20,
+    marginBottom: 32,
+  },
+  statCard: {
+    background: "#fff",
+    borderRadius: 20,
+    padding: "20px",
+    display: "flex",
+    alignItems: "center",
+    gap: 16,
+    borderWidth: 1,
+    borderStyle: "solid",
+    borderColor: "#E5E7EB",
+  },
+  statIcon: {
+    padding: 12,
+    borderRadius: 16,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  statLabel: {
+    fontSize: 13,
+    color: "#6B7280",
+    margin: 0,
+    marginBottom: 4,
+  },
+  statValue: {
+    fontSize: 28,
+    fontWeight: 800,
+    color: "#111827",
+    margin: 0,
+  },
+  searchSection: {
+    marginBottom: 24,
+  },
+  searchBox: {
+    display: "flex",
+    alignItems: "center",
+    gap: 12,
+    background: "#fff",
+    padding: "12px 20px",
+    borderRadius: 16,
+    borderWidth: 1,
+    borderStyle: "solid",
+    borderColor: "#E5E7EB",
+    marginBottom: 12,
+  },
+  searchInput: {
+    flex: 1,
+    border: "none",
+    outline: "none",
+    fontSize: 14,
+    fontFamily: "'Inter', system-ui",
+    background: "transparent",
+  },
+  searchResult: {
+    fontSize: 13,
+    color: "#6B7280",
+    margin: 0,
+  },
+  tableCard: {
+    background: "#fff",
+    borderRadius: 20,
+    borderWidth: 1,
+    borderStyle: "solid",
+    borderColor: "#E5E7EB",
+    overflow: "hidden",
+  },
+  tableHeader: {
+    padding: "20px 24px",
+    borderBottomWidth: 1,
+    borderBottomStyle: "solid",
+    borderBottomColor: "#E5E7EB",
+  },
+  tableTitle: {
+    fontSize: 16,
+    fontWeight: 600,
+    color: "#111827",
+    margin: 0,
+    marginBottom: 4,
+  },
+  tableSubtitle: {
+    fontSize: 13,
+    color: "#6B7280",
+    margin: 0,
+  },
+  tableWrapper: {
+    overflowX: "auto",
+  },
+  table: {
+    width: "100%",
+    borderCollapse: "collapse",
+    minWidth: 700,
+  },
+  th: {
+    textAlign: "left",
+    padding: "16px 20px",
+    background: "#F9FAFB",
+    fontSize: 13,
+    fontWeight: 600,
+    color: "#6B7280",
+    borderBottomWidth: 1,
+    borderBottomStyle: "solid",
+    borderBottomColor: "#E5E7EB",
+  },
+  td: {
+    padding: "16px 20px",
+    fontSize: 14,
+    color: "#111827",
+    borderBottomWidth: 1,
+    borderBottomStyle: "solid",
+    borderBottomColor: "#F3F4F6",
+  },
+  rowEven: {
+    background: "#fff",
+  },
+  rowOdd: {
+    background: "#F9FAFB",
+  },
+  userName: {
+    display: "flex",
+    alignItems: "center",
+    gap: 12,
+  },
+  avatar: {
+    width: 36,
+    height: 36,
+    borderRadius: "50%",
+    background: "linear-gradient(135deg, #667EEA 0%, #764BA2 100%)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    color: "#fff",
+    fontSize: 14,
+    fontWeight: 600,
+    flexShrink: 0,
+  },
+  name: {
+    fontWeight: 500,
+    color: "#111827",
+  },
+  emailCell: {
+    display: "flex",
+    alignItems: "center",
+    gap: 8,
+    fontSize: 13,
+    color: "#4B5563",
+  },
+  phoneCell: {
+    display: "flex",
+    alignItems: "center",
+    gap: 8,
+    fontSize: 13,
+    color: "#4B5563",
+  },
+  dateCell: {
+    display: "flex",
+    alignItems: "center",
+    gap: 8,
+    fontSize: 13,
+    color: "#6B7280",
+  },
+  deleteBtn: {
+    display: "inline-flex",
+    alignItems: "center",
+    gap: 6,
+    padding: "6px 12px",
+    background: "#FEE2E2",
+    color: "#DC2626",
+    border: "none",
+    borderRadius: 8,
+    fontSize: 13,
+    fontWeight: 500,
+    cursor: "pointer",
+    transition: "all 0.2s",
+  },
+  emptyState: {
+    padding: "64px 24px",
+    textAlign: "center",
+  },
+  emptyText: {
+    fontSize: 16,
+    fontWeight: 500,
+    color: "#111827",
+    marginTop: 16,
+    marginBottom: 4,
+  },
+  emptySubtext: {
+    fontSize: 14,
+    color: "#6B7280",
+    margin: 0,
+  },
 };

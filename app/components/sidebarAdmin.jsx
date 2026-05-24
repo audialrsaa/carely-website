@@ -8,7 +8,7 @@ import {
   FileText,
   LogOut,
   Shield,
-  Settings,
+  User,
   BarChart3,
 } from "lucide-react";
 import Image from "next/image";
@@ -29,9 +29,9 @@ export default function SidebarAdmin() {
       icon: FileText,
     },
     {
-      label: "Pengaturan",
-      href: "/admin/settings",
-      icon: Settings,
+      label: "Profile",
+      href: "/admin/profile",
+      icon: User,
     },
   ];
 

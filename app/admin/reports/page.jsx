@@ -8,6 +8,9 @@ import {
   RefreshCcw,
   Loader2,
   Trash2,
+  FileText,
+  Calendar,
+  User,
 } from "lucide-react";
 
 const API = "http://localhost:5000/api";
@@ -19,9 +22,6 @@ export default function AdminReportsPage() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
 
-  // =========================
-  // FETCH REPORTS
-  // =========================
   const fetchReports = async () => {
     try {
       const token = localStorage.getItem("token");
@@ -44,8 +44,8 @@ export default function AdminReportsPage() {
       }
 
       const data = await res.json();
-      setReports(data);
-      setFiltered(data);
+      setReports(Array.isArray(data) ? data : []);
+      setFiltered(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error(err);
     } finally {
@@ -57,9 +57,6 @@ export default function AdminReportsPage() {
     fetchReports();
   }, []);
 
-  // =========================
-  // FILTER
-  // =========================
   useEffect(() => {
     let temp = [...reports];
 
@@ -78,40 +75,6 @@ export default function AdminReportsPage() {
     setFiltered(temp);
   }, [search, statusFilter, reports]);
 
-  // =========================
-  // UPDATE STATUS
-  // =========================
-  const updateStatus = async (id, newStatus) => {
-    try {
-      const token = localStorage.getItem("token");
-
-      const res = await fetch(`${API}/reports/${id}/status`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          new_status: newStatus,
-          notes: `Status diubah admin menjadi ${newStatus}`,
-        }),
-      });
-
-      if (!res.ok) {
-        alert("Gagal update status");
-        return;
-      }
-
-      fetchReports();
-    } catch (err) {
-      console.error(err);
-      alert("Terjadi error");
-    }
-  };
-
-  // =========================
-  // DELETE REPORT
-  // =========================
   const deleteReport = async (id) => {
     const confirmDelete = confirm("Yakin ingin menghapus laporan ini?");
     if (!confirmDelete) return;
@@ -139,56 +102,63 @@ export default function AdminReportsPage() {
     }
   };
 
-  // =========================
-  // STYLE HELPERS
-  // =========================
   const getPriorityStyle = (priority) => {
     const map = {
-      emergency: { bg: "#fde8e8", color: "#c0392b", label: "Emergency" },
-      high: { bg: "#fff7d6", color: "#b07d00", label: "High" },
-      medium: { bg: "#e8f5ff", color: "#004b8d", label: "Medium" },
+      emergency: { bg: "#FEE2E2", color: "#DC2626", label: "Emergency" },
+      high: { bg: "#FEF3C7", color: "#D97706", label: "High" },
+      medium: { bg: "#DBEAFE", color: "#2563EB", label: "Medium" },
+      low: { bg: "#F3F4F6", color: "#6B7280", label: "Low" },
     };
-    return map[priority] || { bg: "#f1f1e6", color: "#3a5068", label: "Low" };
+    return map[priority] || map.low;
   };
 
   const getStatusStyle = (status) => {
     const map = {
-      pending: { bg: "#fff7d6", color: "#b07d00", label: "Pending" },
-      diperiksa: { bg: "#e8f5ff", color: "#004b8d", label: "Diperiksa" },
-      diverifikasi: { bg: "#ede9fe", color: "#6d28d9", label: "Diverifikasi" },
-      tindak_lanjut: { bg: "#e0f2fe", color: "#0369a1", label: "Tindak Lanjut" },
-      selesai: { bg: "#e6f9f4", color: "#0a7c5c", label: "Selesai" },
-      rejected: { bg: "#fde8e8", color: "#c0392b", label: "Ditolak" },
+      pending: { bg: "#FEF3C7", color: "#D97706", label: "Menunggu" },
+      diperiksa: { bg: "#DBEAFE", color: "#2563EB", label: "Diperiksa" },
+      diverifikasi: { bg: "#E0E7FF", color: "#4F46E5", label: "Diverifikasi" },
+      tindak_lanjut: { bg: "#E0E7FF", color: "#4F46E5", label: "Tindak Lanjut" },
+      selesai: { bg: "#D1FAE5", color: "#059669", label: "Selesai" },
+      rejected: { bg: "#FEE2E2", color: "#DC2626", label: "Ditolak" },
     };
-    return map[status] || { bg: "#f1f1e6", color: "#3a5068", label: status };
+    return map[status] || { bg: "#F3F4F6", color: "#6B7280", label: status };
   };
 
-  // =========================
-  // LOADING
-  // =========================
   if (loading) {
     return (
       <div style={styles.loadingWrap}>
-        <Loader2 size={42} style={{ color: "#004b8d", animation: "spin 1s linear infinite" }} />
-        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+        <div style={styles.loadingCard}>
+          <div style={styles.spinner}></div>
+          <p style={styles.loadingText}>Memuat laporan...</p>
+        </div>
+        <style>{`
+          @keyframes spin {
+            to { transform: rotate(360deg); }
+          }
+        `}</style>
       </div>
     );
   }
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
-      {/* HEADER */}
-      <div style={styles.hero}>
-        <h1 style={styles.heroTitle}>Kelola Laporan</h1>
-        <p style={styles.heroDesc}>
-          Admin dapat memeriksa, memverifikasi, menindak lanjuti, atau menyelesaikan laporan.
-        </p>
+    <div style={styles.container}>
+      {/* Header */}
+      <div style={styles.header}>
+        <div>
+          <div style={styles.headerBadge}>Admin Panel</div>
+          <h1 style={styles.title}>Kelola Laporan</h1>
+          <p style={styles.subtitle}>Admin dapat memeriksa, memverifikasi, menindak lanjuti, atau menyelesaikan laporan</p>
+        </div>
+        <div style={styles.statsBadge}>
+          <FileText size={16} />
+          Total: {reports.length}
+        </div>
       </div>
 
-      {/* FILTER */}
+      {/* Filter Section */}
       <div style={styles.filterCard}>
         <div style={styles.searchBox}>
-          <Search size={18} color="#8a9bb0" />
+          <Search size={18} color="#9CA3AF" />
           <input
             type="text"
             placeholder="Cari judul atau pelapor..."
@@ -198,277 +168,380 @@ export default function AdminReportsPage() {
           />
         </div>
 
-        <select
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-          style={styles.select}
-        >
-          <option value="all">Semua Status</option>
-          <option value="pending">Pending</option>
-          <option value="diperiksa">Diperiksa</option>
-          <option value="diverifikasi">Diverifikasi</option>
-          <option value="tindak_lanjut">Tindak Lanjut</option>
-          <option value="selesai">Selesai</option>
-          <option value="rejected">Ditolak</option>
-        </select>
+        <div style={styles.filterRight}>
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            style={styles.select}
+          >
+            <option value="all">Semua Status</option>
+            <option value="pending">Menunggu</option>
+            <option value="diperiksa">Diperiksa</option>
+            <option value="diverifikasi">Diverifikasi</option>
+            <option value="tindak_lanjut">Tindak Lanjut</option>
+            <option value="selesai">Selesai</option>
+            <option value="rejected">Ditolak</option>
+          </select>
 
-        <button onClick={fetchReports} style={styles.refreshBtn}>
-          <RefreshCcw size={16} />
-        </button>
+          <button onClick={fetchReports} style={styles.refreshBtn}>
+            <RefreshCcw size={16} />
+          </button>
+        </div>
       </div>
 
-      {/* TABLE */}
-      <div style={styles.tableWrap}>
-        <table style={styles.table}>
-          <thead>
-            <tr>
-              <th style={styles.th}>Judul</th>
-              <th style={styles.th}>Pelapor</th>
-              <th style={styles.th}>Kategori</th>
-              <th style={styles.th}>Prioritas</th>
-              <th style={styles.th}>Status</th>
-              <th style={styles.th}>Tanggal</th>
-              <th style={styles.th}>Aksi</th>
-            </tr>
-          </thead>
+      {/* Result Info */}
+      <div style={styles.resultInfo}>
+        <p>Menampilkan {filtered.length} dari {reports.length} laporan</p>
+      </div>
 
-          <tbody>
-            {filtered.length > 0 ? (
-              filtered.map((report) => {
-                const priority = getPriorityStyle(report.priority);
-                const status = getStatusStyle(report.status);
-
-                return (
-                  <tr key={report.id}>
-                    <td style={styles.td}>{report.title}</td>
-
-                    <td style={styles.td}>
-                      {report.reporter_name || "User"}
-                    </td>
-
-                    {/* CATEGORY */}
-                    <td style={styles.td}>
-                      {report.category_name || "-"}
-                    </td>
-
-                    <td style={styles.td}>
-                      <span
-                        style={{
-                          ...styles.badge,
-                          background: priority.bg,
-                          color: priority.color,
-                        }}
-                      >
-                        {priority.label}
-                      </span>
-                    </td>
-
-                    <td style={styles.td}>
-                      <span
-                        style={{
-                          ...styles.badge,
-                          background: status.bg,
-                          color: status.color,
-                        }}
-                      >
-                        {status.label}
-                      </span>
-                    </td>
-
-                    <td style={styles.td}>
-                      {new Date(report.created_at).toLocaleDateString("id-ID")}
-                    </td>
-
-                    <td style={styles.td}>
-                      <div style={styles.actionWrap}>
-                        <Link
-                          href={`/admin/reports/${report.id}`}
-                          style={styles.detailBtn}
-                        >
-                          <Eye size={15} />
-                        </Link>
-
-                        <select
-                          value={report.status}
-                          onChange={(e) =>
-                            updateStatus(report.id, e.target.value)
-                          }
-                          style={styles.statusSelect}
-                        >
-                          <option value="pending">Pending</option>
-                          <option value="diperiksa">Diperiksa</option>
-                          <option value="diverifikasi">Diverifikasi</option>
-                          <option value="tindak_lanjut">Tindak Lanjut</option>
-                          <option value="selesai">Selesai</option>
-                          <option value="rejected">Ditolak</option>
-                        </select>
-
-                        {/* DELETE BUTTON */}
-                        <button
-                          onClick={() => deleteReport(report.id)}
-                          style={styles.deleteBtn}
-                        >
-                          <Trash2 size={15} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })
-            ) : (
+      {/* Table */}
+      <div style={styles.tableCard}>
+        <div style={styles.tableWrapper}>
+          <table style={styles.table}>
+            <thead>
               <tr>
-                <td colSpan="7" style={styles.empty}>
-                  Tidak ada laporan ditemukan.
-                </td>
+                <th style={styles.th}>Laporan</th>
+                <th style={styles.th}>Pelapor</th>
+                <th style={styles.th}>Kategori</th>
+                <th style={styles.th}>Prioritas</th>
+                <th style={styles.th}>Status</th>
+                <th style={styles.th}>Tanggal</th>
+                <th style={styles.th}>Aksi</th>
               </tr>
-            )}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {filtered.length > 0 ? (
+                filtered.map((report, index) => {
+                  const priority = getPriorityStyle(report.priority);
+                  const status = getStatusStyle(report.status);
+
+                  return (
+                    <tr key={report.id} style={index % 2 === 0 ? styles.rowEven : styles.rowOdd}>
+                      <td style={styles.td}>
+                        <div style={styles.reportTitle}>
+                          <FileText size={14} color="#9CA3AF" />
+                          <span>{report.title}</span>
+                        </div>
+                      </td>
+                      <td style={styles.td}>
+                        <div style={styles.reporterInfo}>
+                          <User size={14} color="#9CA3AF" />
+                          <span>{report.reporter_name || "User"}</span>
+                        </div>
+                      </td>
+                      <td style={styles.td}>
+                        <span style={styles.categoryBadge}>
+                          {report.category_name || "-"}
+                        </span>
+                      </td>
+                      <td style={styles.td}>
+                        <span style={{ ...styles.badge, backgroundColor: priority.bg, color: priority.color }}>
+                          {priority.label}
+                        </span>
+                      </td>
+                      <td style={styles.td}>
+                        <span style={{ ...styles.badge, backgroundColor: status.bg, color: status.color }}>
+                          {status.label}
+                        </span>
+                      </td>
+                      <td style={styles.td}>
+                        <div style={styles.dateCell}>
+                          <Calendar size={14} color="#9CA3AF" />
+                          <span>{new Date(report.created_at).toLocaleDateString("id-ID")}</span>
+                        </div>
+                      </td>
+                      <td style={styles.td}>
+                        <div style={styles.actionWrap}>
+                          <Link href={`/admin/reports/${report.id}`} style={styles.detailBtn}>
+                            <Eye size={15} />
+                          </Link>
+
+                          <button onClick={() => deleteReport(report.id)} style={styles.deleteBtn}>
+                            <Trash2 size={15} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
+              ) : (
+                <tr>
+                  <td colSpan="7" style={styles.emptyState}>
+                    <FileText size={48} color="#D1D5DB" />
+                    <p style={styles.emptyText}>Tidak ada laporan ditemukan</p>
+                    <p style={styles.emptySubtext}>
+                      {search || statusFilter !== "all" 
+                        ? "Coba dengan filter yang berbeda" 
+                        : "Belum ada laporan yang masuk"}
+                    </p>
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );
-}
+};
 
-// =========================
-// STYLE
-// =========================
 const styles = {
+  container: {
+    maxWidth: 1400,
+    margin: "0 auto",
+    padding: "32px 24px",
+    background: "#F9FAFB",
+    minHeight: "100vh",
+  },
   loadingWrap: {
-    minHeight: "60vh",
+    minHeight: "100vh",
     display: "flex",
     justifyContent: "center",
     alignItems: "center",
+    background: "#F9FAFB",
   },
-
-  hero: {
-    background: "linear-gradient(135deg, #001f3d, #004b8d, #43acff)",
+  loadingCard: {
+    textAlign: "center",
+    background: "#fff",
+    padding: "48px",
     borderRadius: 24,
-    padding: 28,
-    color: "#fff",
+    boxShadow: "0 4px 6px -1px rgba(0,0,0,0.1)",
   },
-
-  heroTitle: { margin: 0, fontSize: 28, fontWeight: 800 },
-  heroDesc: { marginTop: 10, fontSize: 14, lineHeight: 1.6, color: "rgba(255,255,255,0.85)" },
-
+  spinner: {
+    width: 40,
+    height: 40,
+    borderWidth: 4,
+    borderStyle: "solid",
+    borderColor: "#E5E7EB",
+    borderTopColor: "#2563EB",
+    borderRadius: "50%",
+    animation: "spin 1s linear infinite",
+    margin: "0 auto",
+  },
+  loadingText: {
+    marginTop: 16,
+    color: "#6B7280",
+    fontSize: 14,
+  },
+  header: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    marginBottom: 24,
+    flexWrap: "wrap",
+    gap: 16,
+  },
+  headerBadge: {
+    fontSize: 12,
+    fontWeight: 600,
+    color: "#2563EB",
+    textTransform: "uppercase",
+    letterSpacing: "0.5px",
+    marginBottom: 8,
+  },
+  title: {
+    fontSize: 32,
+    fontWeight: 800,
+    color: "#111827",
+    margin: 0,
+    marginBottom: 8,
+  },
+  subtitle: {
+    color: "#6B7280",
+    fontSize: 14,
+    margin: 0,
+  },
+  statsBadge: {
+    display: "flex",
+    alignItems: "center",
+    gap: 8,
+    padding: "8px 16px",
+    background: "#fff",
+    borderRadius: 12,
+    fontSize: 13,
+    fontWeight: 600,
+    color: "#2563EB",
+    borderWidth: 1,
+    borderStyle: "solid",
+    borderColor: "#E5E7EB",
+  },
   filterCard: {
     display: "flex",
     gap: 12,
     background: "#fff",
-    padding: 18,
-    borderRadius: 18,
-    border: "1px solid rgba(0,75,141,0.08)",
+    padding: 16,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderStyle: "solid",
+    borderColor: "#E5E7EB",
+    marginBottom: 16,
+    flexWrap: "wrap",
   },
-
   searchBox: {
     flex: 1,
     display: "flex",
     alignItems: "center",
-    gap: 8,
-    border: "1px solid #e2e8f0",
+    gap: 10,
+    borderWidth: 1,
+    borderStyle: "solid",
+    borderColor: "#E5E7EB",
     borderRadius: 12,
-    padding: "0 12px",
+    padding: "0 14px",
+    background: "#F9FAFB",
   },
-
   searchInput: {
     flex: 1,
     border: "none",
     outline: "none",
-    padding: 12,
+    padding: "12px 0",
     fontSize: 14,
+    background: "transparent",
   },
-
+  filterRight: {
+    display: "flex",
+    gap: 10,
+  },
   select: {
-    border: "1px solid #e2e8f0",
+    padding: "0 16px",
+    borderWidth: 1,
+    borderStyle: "solid",
+    borderColor: "#E5E7EB",
     borderRadius: 12,
-    padding: "0 12px",
     fontSize: 14,
+    background: "#F9FAFB",
+    cursor: "pointer",
   },
-
   refreshBtn: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    width: 42,
+    height: 42,
     border: "none",
     borderRadius: 12,
-    padding: "0 20px",
-    background: "#004b8d",
+    background: "#2563EB",
     color: "#fff",
     cursor: "pointer",
   },
-
-  tableWrap: {
+  resultInfo: {
+    fontSize: 13,
+    color: "#6B7280",
+    marginBottom: 16,
+  },
+  tableCard: {
     background: "#fff",
     borderRadius: 20,
+    borderWidth: 1,
+    borderStyle: "solid",
+    borderColor: "#E5E7EB",
     overflow: "hidden",
-    border: "1px solid rgba(0,75,141,0.08)",
   },
-
+  tableWrapper: {
+    overflowX: "auto",
+  },
   table: {
     width: "100%",
     borderCollapse: "collapse",
+    minWidth: 900,
   },
-
   th: {
     textAlign: "left",
-    padding: 16,
-    background: "#f8f9ff",
+    padding: "16px 20px",
+    background: "#F9FAFB",
     fontSize: 13,
     fontWeight: 600,
-    color: "#001f3d",
+    color: "#6B7280",
+    borderBottomWidth: 1,
+    borderBottomStyle: "solid",
+    borderBottomColor: "#E5E7EB",
   },
-
   td: {
-    padding: 16,
-    borderTop: "1px solid #f1f1e6",
+    padding: "16px 20px",
     fontSize: 14,
-    color: "#001f3d",
+    color: "#111827",
+    borderBottomWidth: 1,
+    borderBottomStyle: "solid",
+    borderBottomColor: "#F3F4F6",
   },
-
+  rowEven: {
+    background: "#fff",
+  },
+  rowOdd: {
+    background: "#F9FAFB",
+  },
+  reportTitle: {
+    display: "flex",
+    alignItems: "center",
+    gap: 8,
+  },
+  reporterInfo: {
+    display: "flex",
+    alignItems: "center",
+    gap: 8,
+  },
+  categoryBadge: {
+    padding: "4px 10px",
+    background: "#F3F4F6",
+    borderRadius: 8,
+    fontSize: 12,
+    color: "#6B7280",
+  },
   badge: {
-    padding: "5px 12px",
-    borderRadius: 40,
+    padding: "4px 12px",
+    borderRadius: 20,
     fontSize: 12,
     fontWeight: 600,
+    display: "inline-block",
   },
-
+  dateCell: {
+    display: "flex",
+    alignItems: "center",
+    gap: 8,
+    fontSize: 13,
+    color: "#6B7280",
+  },
   actionWrap: {
     display: "flex",
     alignItems: "center",
     gap: 8,
   },
-
   detailBtn: {
     width: 34,
     height: 34,
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    borderRadius: 10,
-    background: "#e8f5ff",
-    color: "#004b8d",
+    borderRadius: 8,
+    background: "#EFF6FF",
+    color: "#2563EB",
     textDecoration: "none",
   },
-
-  statusSelect: {
-    padding: "8px 10px",
-    borderRadius: 10,
-    border: "1px solid #e2e8f0",
-    fontSize: 12,
-  },
-
   deleteBtn: {
     width: 34,
     height: 34,
-    borderRadius: 10,
+    borderRadius: 8,
     border: "none",
-    background: "#fde8e8",
-    color: "#c0392b",
+    background: "#FEE2E2",
+    color: "#DC2626",
     cursor: "pointer",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
   },
-
-  empty: {
+  emptyState: {
+    padding: "64px 24px",
     textAlign: "center",
-    padding: 48,
-    color: "#3a5068",
+  },
+  emptyText: {
+    fontSize: 16,
+    fontWeight: 500,
+    color: "#111827",
+    marginTop: 16,
+    marginBottom: 4,
+  },
+  emptySubtext: {
+    fontSize: 14,
+    color: "#6B7280",
+    margin: 0,
   },
 };

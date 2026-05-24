@@ -1,110 +1,79 @@
-// ============================================================
-// app/admin/reports/[id]/page.jsx
-// ADMIN DETAIL + STATUS + COMMENTS
-// ============================================================
 "use client";
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import {
-  ArrowLeft,
-  RefreshCcw,
-  CheckCircle,
-  Clock,
-  AlertTriangle,
   MapPin,
   Calendar,
-  User,
+  ShieldAlert,
   FileText,
+  Clock,
+  ArrowLeft,
+  Loader2,
+  AlertCircle,
+  CheckCircle,
+  User,
+  MessageSquare,
   Image as ImageIcon,
   Activity,
-  Loader2,
   Send,
-  MessageCircle,
+  Lock,
+  Pencil,
+  Trash2,
+  X,
+  Save,
 } from "lucide-react";
 
 const API = "http://localhost:5000/api";
 
-export default function AdminReportDetailPage() {
+export default function UserReportDetailPage() {
   const { id } = useParams();
   const router = useRouter();
 
   const [report, setReport] = useState(null);
   const [timeline, setTimeline] = useState([]);
   const [comments, setComments] = useState([]);
-
-  const [newStatus, setNewStatus] = useState("");
-  const [notes, setNotes] = useState("");
   const [newComment, setNewComment] = useState("");
-
   const [loading, setLoading] = useState(true);
-  const [updating, setUpdating] = useState(false);
-  const [sendingComment, setSendingComment] = useState(false);
+  const [loadingComment, setLoadingComment] = useState(false);
 
-  const [categories, setCategories] = useState([]);
-  const [selectedCategory, setSelectedCategory] = useState("");
+  const [isEditing, setIsEditing] = useState(false);
+  const [editForm, setEditForm] = useState({});
+  const [loadingEdit, setLoadingEdit] = useState(false);
+  const [newPhoto, setNewPhoto] = useState(null);
+  const [newPhotoPreview, setNewPhotoPreview] = useState(null);
+  const [removePhoto, setRemovePhoto] = useState(false);
 
-  // ======================================================
-  // FETCH REPORT DETAIL
-  // ======================================================
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [loadingDelete, setLoadingDelete] = useState(false);
+
   const fetchDetail = async () => {
     try {
       const token = localStorage.getItem("token");
+      if (!token) { window.location.href = "/login"; return; }
 
-      if (!token) {
-        router.push("/login");
-        return;
-      }
-
-      const res = await fetch(`${API}/reports/${id}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+      const res = await fetch(`${API}/reports/my/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
       });
 
-      if (!res.ok) {
-        const text = await res.text();
-        console.error("Fetch Detail Error:", text);
-
-        if (res.status === 401 || res.status === 403) {
-          localStorage.clear();
-          router.push("/login");
-        }
-
-        return;
-      }
+      if (!res.ok) { console.error("Gagal ambil detail laporan:", await res.text()); return; }
 
       const data = await res.json();
-
-      setReport(data.report);
+      setReport(data.report || data);
       setTimeline(data.timeline || []);
-      setNewStatus(data.report.status);
-      setSelectedCategory(data.report.category_id || "");
-    } catch (err) {
-      console.error(err);
+    } catch (error) {
+      console.error("Fetch Detail Error:", error);
     }
   };
 
-  // ======================================================
-  // FETCH COMMENTS
-  // ======================================================
   const fetchComments = async () => {
     try {
       const token = localStorage.getItem("token");
-
       const res = await fetch(`${API}/comments/report/${id}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
       });
-
-      if (!res.ok) {
-        const text = await res.text();
-        console.error("Fetch Comment Error:", text);
-        return;
-      }
-
+      if (!res.ok) { console.error("Fetch Comment Error:", await res.text()); return; }
       const data = await res.json();
       setComments(Array.isArray(data) ? data : []);
     } catch (error) {
@@ -112,658 +81,1139 @@ export default function AdminReportDetailPage() {
     }
   };
 
-  const fetchCategories = async () => {
-  try {
-    const res = await fetch(`${API}/reports/categories`);
-
-    const data = await res.json();
-
-    setCategories(data);
-  } catch (err) {
-    console.error(err);
-  }
-};
-
-  // ======================================================
-  // INITIAL LOAD
-  // ======================================================
   useEffect(() => {
     const init = async () => {
       if (!id) return;
-
       setLoading(true);
-
-      await Promise.all([
-        fetchDetail(),
-        fetchComments(),
-        fetchCategories(),
-      ]);
-
+      await Promise.all([fetchDetail(), fetchComments()]);
       setLoading(false);
     };
-
     init();
   }, [id]);
 
-  // ======================================================
-  // UPDATE STATUS
-  // ======================================================
-  const updateStatus = async () => {
-    try {
-      setUpdating(true);
+  const handleOpenEdit = () => {
+    setEditForm({
+      title: report.title || "",
+      description: report.description || "",
+      incident_location: report.incident_location || "",
+      incident_date: report.incident_date ? report.incident_date.split("T")[0] : "",
+    });
+    setNewPhoto(null);
+    setNewPhotoPreview(null);
+    setRemovePhoto(false);
+    setIsEditing(true);
+  };
 
+  const handleCancelEdit = () => {
+    setIsEditing(false);
+    setNewPhoto(null);
+    setNewPhotoPreview(null);
+    setRemovePhoto(false);
+  };
+
+  const handleEditChange = (e) =>
+    setEditForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+
+  const handlePhotoChange = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setNewPhoto(file);
+    setRemovePhoto(false);
+    setNewPhotoPreview(URL.createObjectURL(file));
+  };
+
+  const handleRemovePhoto = () => {
+    setNewPhoto(null);
+    setNewPhotoPreview(null);
+    setRemovePhoto(true);
+  };
+
+  const handleSaveEdit = async () => {
+    try {
+      setLoadingEdit(true);
       const token = localStorage.getItem("token");
 
-      const res = await fetch(`${API}/reports/${id}/status`, {
+      const formData = new FormData();
+      formData.append("title", editForm.title);
+      formData.append("description", editForm.description);
+      formData.append("incident_location", editForm.incident_location);
+      formData.append("incident_date", editForm.incident_date);
+      if (newPhoto) formData.append("bukti_foto", newPhoto);
+      if (removePhoto) formData.append("remove_foto", "true");
+
+      const res = await fetch(`${API}/reports/my/${id}`, {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          new_status: newStatus,
-          category_id: selectedCategory || null,
-          notes: notes || `Status diubah menjadi ${newStatus}`,
-        }),
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
       });
 
       const data = await res.json();
+      if (!res.ok) { alert(data.message || "Gagal menyimpan perubahan"); return; }
 
-      if (!res.ok) {
-        alert(data.message || "Gagal update status");
-        return;
-      }
-
-      alert("Status berhasil diperbarui");
-      setNotes("");
-
+      setIsEditing(false);
+      setNewPhoto(null);
+      setNewPhotoPreview(null);
+      setRemovePhoto(false);
       await fetchDetail();
-    } catch (err) {
-      console.error(err);
-      alert("Terjadi kesalahan");
+    } catch (error) {
+      console.error("Edit Error:", error);
+      alert("Terjadi kesalahan saat menyimpan");
     } finally {
-      setUpdating(false);
+      setLoadingEdit(false);
     }
   };
 
-  // ======================================================
-  // ADD COMMENT
-  // ======================================================
+  const handleConfirmDelete = async () => {
+    try {
+      setLoadingDelete(true);
+      const token = localStorage.getItem("token");
+      const res = await fetch(`${API}/reports/my/${id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      const data = await res.json();
+      if (!res.ok) { alert(data.message || "Gagal menghapus laporan"); return; }
+
+      router.push("/users");
+    } catch (error) {
+      console.error("Delete Error:", error);
+      alert("Terjadi kesalahan saat menghapus");
+    } finally {
+      setLoadingDelete(false);
+      setShowDeleteModal(false);
+    }
+  };
+
   const handleAddComment = async () => {
     if (!newComment.trim()) return;
-
     try {
-      setSendingComment(true);
-
+      setLoadingComment(true);
       const token = localStorage.getItem("token");
-
       const res = await fetch(`${API}/comments/report/${id}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          comment: newComment,
-        }),
+        body: JSON.stringify({ comment: newComment }),
       });
-
       const data = await res.json();
-
-      if (!res.ok) {
-        alert(data.message || "Gagal mengirim komentar");
-        return;
-      }
-
+      if (!res.ok) { alert(data.message || "Gagal menambahkan komentar"); return; }
       setNewComment("");
       fetchComments();
     } catch (error) {
       console.error("Add Comment Error:", error);
       alert("Terjadi kesalahan");
     } finally {
-      setSendingComment(false);
+      setLoadingComment(false);
     }
   };
 
-  // ======================================================
-  // HELPERS
-  // ======================================================
+  const getStatusLabel = (status) => {
+    const map = {
+      pending: "Menunggu",
+      diproses: "Diproses",
+      diverifikasi: "Diverifikasi",
+      tindak_lanjut: "Tindak Lanjut",
+      selesai: "Selesai",
+      rejected: "Ditolak",
+      ditolak: "Ditolak",
+    };
+    return map[status] || status;
+  };
+
   const getStatusStyle = (status) => {
     const map = {
-      pending: { bg: "#fff7d6", color: "#b07d00", label: "Pending" },
-      diperiksa: { bg: "#e8f5ff", color: "#004b8d", label: "Diperiksa" },
-      diverifikasi: { bg: "#ede9fe", color: "#6d28d9", label: "Diverifikasi" },
-      tindak_lanjut: { bg: "#e0f2fe", color: "#0369a1", label: "Tindak Lanjut" },
-      selesai: { bg: "#e6f9f4", color: "#0a7c5c", label: "Selesai" },
-      rejected: { bg: "#fde8e8", color: "#c0392b", label: "Ditolak" },
+      pending: { bg: "#FEF3C7", color: "#D97706", label: "Menunggu", icon: Clock },
+      diproses: { bg: "#DBEAFE", color: "#2563EB", label: "Diproses", icon: Activity },
+      diverifikasi: { bg: "#E0E7FF", color: "#4F46E5", label: "Diverifikasi", icon: CheckCircle },
+      tindak_lanjut: { bg: "#E0E7FF", color: "#4F46E5", label: "Tindak Lanjut", icon: Activity },
+      selesai: { bg: "#D1FAE5", color: "#059669", label: "Selesai", icon: CheckCircle },
+      rejected: { bg: "#FEE2E2", color: "#DC2626", label: "Ditolak", icon: AlertCircle },
+      ditolak: { bg: "#FEE2E2", color: "#DC2626", label: "Ditolak", icon: AlertCircle },
     };
+    return map[status] || { bg: "#F3F4F6", color: "#6B7280", label: status, icon: FileText };
+  };
 
-    return map[status] || {
-      bg: "#f1f1e6",
-      color: "#3a5068",
-      label: status,
+  const getPriorityStyle = (priority) => {
+    const map = {
+      low: { bg: "#D1FAE5", color: "#059669", label: "Rendah" },
+      medium: { bg: "#FEF3C7", color: "#D97706", label: "Sedang" },
+      high: { bg: "#FFEDD5", color: "#EA580C", label: "Tinggi" },
+      emergency: { bg: "#FEE2E2", color: "#DC2626", label: "Darurat" },
     };
+    return map[priority] || { bg: "#F3F4F6", color: "#6B7280", label: "-" };
   };
 
   const formatDateTime = (date) => {
     if (!date) return "-";
-
     return new Date(date).toLocaleString("id-ID", {
-      day: "numeric",
-      month: "long",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
+      day: "numeric", month: "long", year: "numeric",
+      hour: "2-digit", minute: "2-digit",
     });
   };
 
-  // ======================================================
-  // LOADING
-  // ======================================================
+  const formatDate = (date) => {
+    if (!date) return "-";
+    return new Date(date).toLocaleDateString("id-ID", {
+      day: "numeric", month: "long", year: "numeric",
+    });
+  };
+
+  const commentClosed = report && ["selesai", "rejected", "ditolak"].includes(report.status);
+  const isPending = report?.status === "pending";
+
   if (loading) {
     return (
       <div style={styles.loadingWrap}>
-        <Loader2
-          size={42}
-          style={{
-            color: "#004b8d",
-            animation: "spin 1s linear infinite",
-          }}
-        />
+        <div style={styles.loadingCard}>
+          <div style={styles.spinner}></div>
+          <p style={styles.loadingText}>Memuat detail laporan...</p>
+        </div>
         <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       </div>
     );
   }
 
-  // ======================================================
-  // NOT FOUND
-  // ======================================================
   if (!report) {
     return (
-      <div style={{ textAlign: "center", padding: 60 }}>
-        <AlertTriangle size={48} color="#c0392b" />
-        <p>Laporan tidak ditemukan</p>
-
-        <Link
-          href="/admin/reports"
-          style={{
-            color: "#004b8d",
-            marginTop: 16,
-            display: "inline-block",
-          }}
-        >
-          Kembali ke daftar
-        </Link>
+      <div style={styles.notFound}>
+        <AlertCircle size={48} color="#DC2626" />
+        <h2 style={styles.notFoundTitle}>Laporan tidak ditemukan</h2>
+        <p style={styles.notFoundText}>Akses ditolak atau laporan tidak tersedia.</p>
+        <Link href="/users" style={styles.backLink}>Kembali ke Dashboard</Link>
       </div>
     );
   }
 
   const status = getStatusStyle(report.status);
+  const priority = getPriorityStyle(report.priority);
+  const StatusIcon = status.icon;
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
-      {/* BACK */}
-      <Link href="/admin/reports" style={styles.backBtn}>
+    <div style={styles.container}>
+      {/* Back Button */}
+      <Link href="/users" style={styles.backBtn}>
         <ArrowLeft size={18} />
-        Kembali ke Daftar
+        Kembali ke Dashboard
       </Link>
 
-      {/* DETAIL */}
+      {/* Detail Card */}
       <div style={styles.card}>
-        <h1 style={styles.title}>{report.title}</h1>
-
-        <div
-          style={{
-            marginTop: 12,
-            marginBottom: 18,
-          }}
-        >
-          <span
-            style={{
-              ...styles.badge,
-              background: status.bg,
-              color: status.color,
-            }}
-          >
-            {status.label}
-          </span>
-        </div>
-
-        <div style={styles.descBox}>
-          <FileText size={18} color="#004b8d" />
-          <p style={styles.desc}>{report.description}</p>
-        </div>
-
-        {report.bukti_foto && (
-          <div style={styles.imageBox}>
-            <ImageIcon size={18} color="#004b8d" />
-            <img
-              src={report.bukti_foto}
-              alt="Bukti Foto"
-              style={styles.image}
-            />
-          </div>
-        )}
-
-        <div style={styles.metaGrid}>
-          <MetaItem
-            icon={<User size={16} />}
-            label="Pelapor"
-            value={report.reporter_name || "-"}
-          />
-
-          <MetaItem
-            icon={<FileText size={16} />}
-            label="Kategori"
-            value={report.category_name || "-"}
-          />
-
-          <MetaItem
-            icon={<MapPin size={16} />}
-            label="Lokasi"
-            value={report.incident_location || "-"}
-          />
-
-          <MetaItem
-            icon={<Calendar size={16} />}
-            label="Dibuat"
-            value={formatDateTime(report.created_at)}
-          />
-        </div>
-      </div>
-
-      {/* UPDATE STATUS */}
-      <div style={styles.card}>
-        <h2 style={styles.sectionTitle}>Update Status</h2>
-
-        <select
-          value={newStatus}
-          onChange={(e) => setNewStatus(e.target.value)}
-          style={styles.select}
-        >
-          <option value="pending">Pending</option>
-          <option value="diperiksa">Diperiksa</option>
-          <option value="diverifikasi">Diverifikasi</option>
-          <option value="tindak_lanjut">Tindak Lanjut</option>
-          <option value="selesai">Selesai</option>
-          <option value="rejected">Ditolak</option>
-        </select>
-
-        <select
-          value={selectedCategory}
-          onChange={(e) => setSelectedCategory(e.target.value)}
-          style={styles.select}
-        >
-          <option value="">Pilih Kategori</option>
-
-          {categories.map((cat) => (
-            <option key={cat.id} value={cat.id}>
-              {cat.category_name}
-            </option>
-          ))}
-        </select>
-
-        <textarea
-          placeholder="Catatan admin (opsional)"
-          value={notes}
-          onChange={(e) => setNotes(e.target.value)}
-          style={styles.textarea}
-        />
-
-        <button
-          onClick={updateStatus}
-          disabled={updating}
-          style={styles.updateBtn}
-        >
-          {updating ? (
-            <RefreshCcw
-              size={16}
-              style={{ animation: "spin 1s linear infinite" }}
-            />
-          ) : (
-            <CheckCircle size={16} />
-          )}
-
-          {updating ? "Memproses..." : "Update Status"}
-        </button>
-      </div>
-
-      {/* COMMENTS */}
-      <div style={styles.card}>
-        <h2 style={styles.sectionTitle}>Komentar & Diskusi</h2>
-
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: 14,
-            marginBottom: 24,
-          }}
-        >
-          {comments.length > 0 ? (
-            comments.map((item) => (
-              <div
-                key={item.id}
-                style={{
-                  padding: 14,
-                  borderRadius: 14,
-                  background:
-                    item.role === "admin" ? "#eef6ff" : "#f8fafc",
-                  border: "1px solid #e2e8f0",
-                }}
-              >
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    marginBottom: 8,
-                  }}
-                >
-                  <strong>
-                    {item.full_name}{" "}
-                    {item.role === "admin" && "(Admin)"}
-                  </strong>
-
-                  <span
-                    style={{
-                      fontSize: 12,
-                      color: "#64748b",
-                    }}
-                  >
-                    {formatDateTime(item.created_at)}
-                  </span>
-                </div>
-
-                <p style={{ margin: 0 }}>{item.comment}</p>
-              </div>
-            ))
-          ) : (
-            <p>Belum ada komentar.</p>
-          )}
-        </div>
-
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: 12,
-          }}
-        >
-          <textarea
-            value={newComment}
-            onChange={(e) => setNewComment(e.target.value)}
-            placeholder="Balas atau beri update ke user..."
-            style={styles.textarea}
-          />
-
-          <button
-            onClick={handleAddComment}
-            disabled={sendingComment}
-            style={styles.updateBtn}
-          >
-            {sendingComment ? (
-              <Loader2
-                size={16}
-                style={{ animation: "spin 1s linear infinite" }}
+        <div style={styles.cardHeader}>
+          <div style={{ flex: 1 }}>
+            {isEditing ? (
+              <input
+                name="title"
+                value={editForm.title}
+                onChange={handleEditChange}
+                style={styles.editInput}
+                placeholder="Judul laporan"
               />
             ) : (
-              <Send size={16} />
+              <h1 style={styles.title}>{report.title}</h1>
+            )}
+          </div>
+
+          <div style={styles.badgeGroup}>
+            <span style={{ ...styles.badge, background: status.bg, color: status.color }}>
+              <StatusIcon size={12} style={{ marginRight: 6 }} />
+              {status.label}
+            </span>
+            <span style={{ ...styles.badge, background: priority.bg, color: priority.color }}>
+              Prioritas: {priority.label}
+            </span>
+
+            {isPending && !isEditing && (
+              <>
+                <button onClick={handleOpenEdit} style={{ ...styles.iconBtn, background: "#EFF6FF", color: "#2563EB" }}>
+                  <Pencil size={14} />
+                  Edit
+                </button>
+                <button onClick={() => setShowDeleteModal(true)} style={{ ...styles.iconBtn, background: "#FEE2E2", color: "#DC2626" }}>
+                  <Trash2 size={14} />
+                  Hapus
+                </button>
+              </>
             )}
 
-            {sendingComment ? "Mengirim..." : "Kirim Komentar"}
-          </button>
+            {isEditing && (
+              <>
+                <button onClick={handleSaveEdit} disabled={loadingEdit} style={{ ...styles.iconBtn, background: "#D1FAE5", color: "#059669" }}>
+                  {loadingEdit ? <Loader2 size={14} style={styles.spin} /> : <Save size={14} />}
+                  Simpan
+                </button>
+                <button onClick={handleCancelEdit} style={{ ...styles.iconBtn, background: "#F3F4F6", color: "#6B7280" }}>
+                  <X size={14} />
+                  Batal
+                </button>
+              </>
+            )}
+          </div>
         </div>
-      </div>
 
-      {/* TIMELINE */}
-      <div style={styles.card}>
-        <h2 style={styles.sectionTitle}>Timeline Status</h2>
+        {/* Description */}
+        <div style={styles.descBox}>
+          <FileText size={18} color="#2563EB" />
+          {isEditing ? (
+            <textarea
+              name="description"
+              value={editForm.description}
+              onChange={handleEditChange}
+              rows={4}
+              style={styles.editTextarea}
+              placeholder="Deskripsi kejadian"
+            />
+          ) : (
+            <p style={styles.desc}>{report.description}</p>
+          )}
+        </div>
 
-        {timeline.length > 0 ? (
-          timeline.map((log) => (
-            <div key={log.id} style={styles.timelineItem}>
-              <div style={styles.timelineIcon}>
-                <Clock size={16} />
-              </div>
+        {/* Info Grid */}
+        <div style={styles.infoGrid}>
+          <div style={styles.infoItem}>
+            <div style={styles.infoIcon}><ShieldAlert size={16} /></div>
+            <div>
+              <p style={styles.infoLabel}>Kategori</p>
+              <p style={styles.infoValue}>{report.category_name || "-"}</p>
+            </div>
+          </div>
 
-              <div style={{ flex: 1 }}>
-                <p style={styles.timelineStatus}>
-                  {log.old_status || "new"} → {log.new_status}
-                </p>
+          <div style={styles.infoItem}>
+            <div style={styles.infoIcon}><MapPin size={16} /></div>
+            <div>
+              <p style={styles.infoLabel}>Lokasi Kejadian</p>
+              {isEditing ? (
+                <input
+                  name="incident_location"
+                  value={editForm.incident_location}
+                  onChange={handleEditChange}
+                  style={styles.infoInput}
+                />
+              ) : (
+                <p style={styles.infoValue}>{report.incident_location || "-"}</p>
+              )}
+            </div>
+          </div>
 
-                <p style={styles.timelineMeta}>
-                  Oleh: {log.changed_by_name || "System"} •{" "}
-                  {formatDateTime(log.created_at)}
-                </p>
+          <div style={styles.infoItem}>
+            <div style={styles.infoIcon}><Calendar size={16} /></div>
+            <div>
+              <p style={styles.infoLabel}>Tanggal Kejadian</p>
+              {isEditing ? (
+                <input
+                  type="date"
+                  name="incident_date"
+                  value={editForm.incident_date}
+                  onChange={handleEditChange}
+                  style={styles.infoInput}
+                />
+              ) : (
+                <p style={styles.infoValue}>{formatDate(report.incident_date)}</p>
+              )}
+            </div>
+          </div>
 
-                {log.notes && (
-                  <p style={styles.timelineNotes}>
-                    "{log.notes}"
-                  </p>
+          <div style={styles.infoItem}>
+            <div style={styles.infoIcon}><Clock size={16} /></div>
+            <div>
+              <p style={styles.infoLabel}>Dibuat Pada</p>
+              <p style={styles.infoValue}>{formatDateTime(report.created_at)}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Image */}
+        <div style={styles.imageBox}>
+          <div style={styles.imageHeader}>
+            <ImageIcon size={18} color="#2563EB" />
+            <span style={styles.imageLabel}>Bukti Foto</span>
+          </div>
+
+          {isEditing ? (
+            <div style={styles.photoEditWrap}>
+              {newPhotoPreview ? (
+                <div style={styles.photoPreview}>
+                  <img src={newPhotoPreview} alt="Preview" style={styles.image} />
+                  <span style={styles.photoPreviewLabel}>Foto baru dipilih</span>
+                </div>
+              ) : !removePhoto && report.bukti_foto ? (
+                <div style={styles.photoPreview}>
+                  <img src={report.bukti_foto} alt="Current" style={{ ...styles.image, opacity: 0.7 }} />
+                  <span style={styles.photoPreviewLabel}>Foto saat ini</span>
+                </div>
+              ) : (
+                <div style={styles.photoEmpty}>
+                  <ImageIcon size={32} color="#D1D5DB" />
+                  <p>Tidak ada foto</p>
+                </div>
+              )}
+
+              <div style={styles.photoActions}>
+                <label style={styles.photoUploadBtn}>
+                  <ImageIcon size={14} />
+                  {newPhotoPreview ? "Ganti Foto" : "Pilih Foto"}
+                  <input type="file" accept="image/*" onChange={handlePhotoChange} style={{ display: "none" }} />
+                </label>
+                {(report.bukti_foto || newPhotoPreview) && !removePhoto && (
+                  <button onClick={handleRemovePhoto} style={styles.photoRemoveBtn}>
+                    <X size={14} />
+                    Hapus Foto
+                  </button>
                 )}
               </div>
             </div>
-          ))
-        ) : (
-          <p>Belum ada timeline.</p>
+          ) : (
+            report.bukti_foto ? (
+              <img src={report.bukti_foto} alt="Bukti" style={styles.image} />
+            ) : (
+              <div style={styles.photoEmpty}>
+                <ImageIcon size={32} color="#D1D5DB" />
+                <p>Tidak ada foto bukti</p>
+              </div>
+            )
+          )}
+        </div>
+
+        {isPending && (
+          <div style={styles.pendingNotice}>
+            <Pencil size={14} />
+            Laporan masih berstatus <strong>Menunggu</strong> — kamu dapat mengedit atau menghapus laporan ini.
+          </div>
         )}
       </div>
-    </div>
-  );
-}
 
-function MetaItem({ icon, label, value }) {
-  return (
-    <div
-      style={{
-        display: "flex",
-        gap: 12,
-        alignItems: "center",
-        padding: "12px 0",
-      }}
-    >
-      <div
-        style={{
-          width: 32,
-          height: 32,
-          borderRadius: 10,
-          background: "#e8f5ff",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          color: "#004b8d",
-        }}
-      >
-        {icon}
+      {/* Timeline Card */}
+      <div style={styles.card}>
+        <div style={styles.sectionHeader}>
+          <Activity size={20} color="#2563EB" />
+          <h2 style={styles.sectionTitle}>Riwayat Status</h2>
+        </div>
+
+        {timeline.length > 0 ? (
+          <div style={styles.timeline}>
+            {timeline.map((log, index) => {
+              const isLast = index === timeline.length - 1;
+              const logStatus = getStatusStyle(log.new_status);
+              return (
+                <div key={log.id} style={styles.timelineItem}>
+                  <div style={styles.timelineLeft}>
+                    <div style={styles.timelineDot} />
+                    {!isLast && <div style={styles.timelineLine} />}
+                  </div>
+                  <div style={styles.timelineRight}>
+                    <div style={styles.timelineHeader}>
+                      <span style={{ ...styles.timelineStatus, backgroundColor: logStatus.bg, color: logStatus.color }}>
+                        {logStatus.label}
+                      </span>
+                      <span style={styles.timelineDate}>{formatDateTime(log.created_at)}</span>
+                    </div>
+                    <p style={styles.timelineActor}>Oleh: {log.changed_by_name || "System"}</p>
+                    {log.notes && <p style={styles.timelineNotes}>"{log.notes}"</p>}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div style={styles.emptyState}>
+            <Clock size={32} color="#D1D5DB" />
+            <p>Belum ada riwayat status</p>
+          </div>
+        )}
       </div>
 
-      <div>
-        <p
-          style={{
-            fontSize: 11,
-            color: "#3a5068",
-            margin: 0,
-          }}
-        >
-          {label}
-        </p>
+      {/* Comments Card */}
+      <div style={styles.card}>
+        <div style={styles.sectionHeader}>
+          <MessageSquare size={20} color="#2563EB" />
+          <h2 style={styles.sectionTitle}>Diskusi</h2>
+        </div>
 
-        <p
-          style={{
-            fontSize: 14,
-            fontWeight: 600,
-            color: "#001f3d",
-            margin: 0,
-          }}
-        >
-          {value}
-        </p>
+        {comments.length > 0 ? (
+          <div style={styles.commentsList}>
+            {comments.map((item) => {
+              const isAdmin = item.role === "admin";
+              return (
+                <div key={item.id} style={styles.commentItem}>
+                  <div style={styles.commentAvatar}>
+                    {item.full_name?.charAt(0) || "U"}
+                  </div>
+                  <div style={styles.commentContent}>
+                    <div style={styles.commentHeader}>
+                      <span style={styles.commentUser}>{item.full_name}</span>
+                      {isAdmin && <span style={styles.adminBadge}>Admin</span>}
+                      <span style={styles.commentDate}>{formatDateTime(item.created_at)}</span>
+                    </div>
+                    <p style={styles.commentText}>{item.comment}</p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div style={styles.emptyComments}>
+            <MessageSquare size={48} color="#D1D5DB" />
+            <p style={styles.emptyText}>Belum ada diskusi</p>
+            <p style={styles.emptySubtext}>Mulai diskusi dengan menulis komentar di bawah</p>
+          </div>
+        )}
+
+        {commentClosed ? (
+          <div style={styles.commentClosed}>
+            <Lock size={16} />
+            Komentar ditutup karena laporan telah selesai/ditolak
+          </div>
+        ) : (
+          <div style={styles.commentForm}>
+            <textarea
+              value={newComment}
+              onChange={(e) => setNewComment(e.target.value)}
+              placeholder="Tulis komentar atau pertanyaan..."
+              rows={3}
+              style={styles.textarea}
+            />
+            <button
+              onClick={handleAddComment}
+              disabled={loadingComment}
+              style={styles.sendBtn}
+            >
+              {loadingComment ? (
+                <div style={styles.btnSpinner}></div>
+              ) : (
+                <Send size={16} />
+              )}
+              Kirim Komentar
+            </button>
+          </div>
+        )}
       </div>
+
+      {/* Delete Modal */}
+      {showDeleteModal && (
+        <div style={styles.modalOverlay} onClick={() => setShowDeleteModal(false)}>
+          <div style={styles.modal} onClick={(e) => e.stopPropagation()}>
+            <div style={styles.modalIcon}>
+              <Trash2 size={28} color="#DC2626" />
+            </div>
+            <h3 style={styles.modalTitle}>Hapus Laporan?</h3>
+            <p style={styles.modalText}>
+              Tindakan ini tidak dapat dibatalkan. Laporan akan dihapus secara permanen.
+            </p>
+            <div style={styles.modalActions}>
+              <button onClick={() => setShowDeleteModal(false)} style={styles.modalCancelBtn}>
+                Batal
+              </button>
+              <button onClick={handleConfirmDelete} disabled={loadingDelete} style={styles.modalDeleteBtn}>
+                {loadingDelete ? <div style={styles.btnSpinnerSmall}></div> : <Trash2 size={14} />}
+                Ya, Hapus
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
 const styles = {
+  container: {
+    maxWidth: 900,
+    margin: "0 auto",
+    padding: "32px 24px",
+    background: "#F9FAFB",
+    minHeight: "100vh",
+  },
   loadingWrap: {
-    minHeight: "60vh",
+    minHeight: "100vh",
     display: "flex",
     justifyContent: "center",
     alignItems: "center",
+    background: "#F9FAFB",
   },
-
+  loadingCard: {
+    textAlign: "center",
+    background: "#fff",
+    padding: "48px",
+    borderRadius: 24,
+    boxShadow: "0 4px 6px -1px rgba(0,0,0,0.1)",
+  },
+  spinner: {
+    width: 40,
+    height: 40,
+    borderWidth: 4,
+    borderStyle: "solid",
+    borderColor: "#E5E7EB",
+    borderTopColor: "#2563EB",
+    borderRadius: "50%",
+    animation: "spin 1s linear infinite",
+    margin: "0 auto",
+  },
+  loadingText: {
+    marginTop: 16,
+    color: "#6B7280",
+    fontSize: 14,
+  },
+  notFound: {
+    textAlign: "center",
+    padding: "60px 24px",
+    background: "#fff",
+    borderRadius: 16,
+    maxWidth: 500,
+    margin: "100px auto",
+  },
+  notFoundTitle: {
+    fontSize: 20,
+    fontWeight: 600,
+    color: "#111827",
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  notFoundText: {
+    fontSize: 14,
+    color: "#6B7280",
+    marginBottom: 24,
+  },
   backBtn: {
     display: "inline-flex",
     alignItems: "center",
     gap: 8,
-    color: "#004b8d",
+    color: "#2563EB",
     textDecoration: "none",
-    fontWeight: 600,
     fontSize: 14,
-    width: "fit-content",
+    fontWeight: 500,
+    marginBottom: 24,
   },
-
+  backLink: {
+    display: "inline-block",
+    padding: "8px 20px",
+    background: "#2563EB",
+    color: "#fff",
+    textDecoration: "none",
+    borderRadius: 8,
+    fontSize: 14,
+    fontWeight: 500,
+  },
   card: {
     background: "#fff",
-    padding: 28,
-    borderRadius: 24,
-    border: "1px solid rgba(0,75,141,0.08)",
+    borderRadius: 20,
+    padding: "28px",
+    marginBottom: 20,
+    borderWidth: 1,
+    borderStyle: "solid",
+    borderColor: "#E5E7EB",
   },
-
+  cardHeader: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    flexWrap: "wrap",
+    gap: 16,
+    marginBottom: 20,
+  },
   title: {
+    fontSize: 24,
+    fontWeight: 700,
+    color: "#111827",
     margin: 0,
-    fontSize: 26,
-    fontWeight: 800,
-    color: "#001f3d",
   },
-
+  badgeGroup: {
+    display: "flex",
+    alignItems: "center",
+    gap: 8,
+    flexWrap: "wrap",
+  },
   badge: {
-    padding: "6px 14px",
-    borderRadius: 40,
-    fontSize: 12,
-    fontWeight: 600,
     display: "inline-flex",
     alignItems: "center",
+    padding: "4px 12px",
+    borderRadius: 20,
+    fontSize: 12,
+    fontWeight: 600,
   },
-
+  iconBtn: {
+    display: "inline-flex",
+    alignItems: "center",
+    gap: 6,
+    padding: "6px 12px",
+    borderRadius: 8,
+    border: "none",
+    fontSize: 12,
+    fontWeight: 500,
+    cursor: "pointer",
+  },
+  spin: {
+    animation: "spin 1s linear infinite",
+  },
+  editInput: {
+    width: "100%",
+    padding: "10px 14px",
+    borderRadius: 10,
+    borderWidth: 1,
+    borderStyle: "solid",
+    borderColor: "#E5E7EB",
+    fontSize: 14,
+    outline: "none",
+  },
+  editTextarea: {
+    width: "100%",
+    padding: "10px 14px",
+    borderRadius: 10,
+    borderWidth: 1,
+    borderStyle: "solid",
+    borderColor: "#E5E7EB",
+    fontSize: 14,
+    resize: "vertical",
+    outline: "none",
+    fontFamily: "'Inter', system-ui",
+  },
   descBox: {
-    background: "#f8f9ff",
-    padding: 20,
+    background: "#F9FAFB",
+    padding: "20px",
     borderRadius: 16,
-    marginTop: 20,
+    marginBottom: 24,
     display: "flex",
     gap: 12,
     alignItems: "flex-start",
   },
-
   desc: {
     margin: 0,
     lineHeight: 1.6,
-    color: "#3a5068",
+    color: "#4B5563",
     flex: 1,
   },
-
-  imageBox: {
-    marginTop: 20,
+  infoGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
+    gap: 16,
+    marginBottom: 24,
   },
-
+  infoItem: {
+    display: "flex",
+    gap: 12,
+    alignItems: "flex-start",
+  },
+  infoIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    background: "#EFF6FF",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    color: "#2563EB",
+  },
+  infoLabel: {
+    fontSize: 11,
+    color: "#6B7280",
+    margin: 0,
+    marginBottom: 2,
+  },
+  infoValue: {
+    fontSize: 14,
+    fontWeight: 500,
+    color: "#111827",
+    margin: 0,
+  },
+  infoInput: {
+    padding: "6px 10px",
+    borderRadius: 8,
+    borderWidth: 1,
+    borderStyle: "solid",
+    borderColor: "#E5E7EB",
+    fontSize: 13,
+    marginTop: 4,
+    width: "100%",
+  },
+  imageBox: {
+    marginTop: 8,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopStyle: "solid",
+    borderTopColor: "#E5E7EB",
+  },
+  imageHeader: {
+    display: "flex",
+    alignItems: "center",
+    gap: 10,
+    marginBottom: 12,
+  },
+  imageLabel: {
+    fontSize: 14,
+    fontWeight: 600,
+    color: "#111827",
+  },
   image: {
     maxWidth: "100%",
     maxHeight: 400,
     objectFit: "contain",
-    borderRadius: 16,
-    border: "1px solid rgba(0,75,141,0.1)",
-  },
-
-  metaGrid: {
-    display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-    gap: 8,
-    marginTop: 20,
-    borderTop: "1px solid #f1f1e6",
-    paddingTop: 20,
-  },
-
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: 700,
-    color: "#001f3d",
-    marginTop: 0,
-    marginBottom: 20,
-  },
-
-  select: {
-    width: "100%",
-    padding: 12,
     borderRadius: 12,
-    border: "1.5px solid #e2e8f0",
-    fontSize: 14,
-    marginBottom: 14,
   },
-
-  textarea: {
-    width: "100%",
-    minHeight: 100,
-    padding: 12,
-    borderRadius: 12,
-    border: "1.5px solid #e2e8f0",
-    resize: "vertical",
-    fontSize: 14,
-    marginBottom: 14,
-  },
-
-  updateBtn: {
+  photoEditWrap: {
     display: "flex",
+    flexDirection: "column",
+  },
+  photoPreview: {
+    display: "inline-block",
+  },
+  photoPreviewLabel: {
+    display: "inline-flex",
+    alignItems: "center",
+    gap: 6,
+    marginTop: 8,
+    fontSize: 12,
+    color: "#6B7280",
+  },
+  photoEmpty: {
+    display: "flex",
+    flexDirection: "column",
     alignItems: "center",
     justifyContent: "center",
     gap: 10,
-    padding: "12px 24px",
-    border: "none",
-    borderRadius: 40,
-    background: "#004b8d",
-    color: "#fff",
-    cursor: "pointer",
-    fontWeight: 600,
+    padding: "32px 0",
+    background: "#F9FAFB",
+    borderRadius: 12,
+    borderWidth: 1,
+    borderStyle: "dashed",
+    borderColor: "#E5E7EB",
   },
-
+  photoActions: {
+    display: "flex",
+    gap: 10,
+    marginTop: 14,
+    flexWrap: "wrap",
+  },
+  photoUploadBtn: {
+    display: "inline-flex",
+    alignItems: "center",
+    gap: 6,
+    padding: "6px 14px",
+    borderRadius: 8,
+    background: "#EFF6FF",
+    color: "#2563EB",
+    fontSize: 12,
+    fontWeight: 500,
+    cursor: "pointer",
+    border: "none",
+  },
+  photoRemoveBtn: {
+    display: "inline-flex",
+    alignItems: "center",
+    gap: 6,
+    padding: "6px 14px",
+    borderRadius: 8,
+    background: "#FEE2E2",
+    color: "#DC2626",
+    fontSize: 12,
+    fontWeight: 500,
+    cursor: "pointer",
+    border: "none",
+  },
+  pendingNotice: {
+    display: "flex",
+    alignItems: "center",
+    gap: 8,
+    marginTop: 20,
+    padding: "10px 16px",
+    background: "#FEF3C7",
+    borderRadius: 10,
+    fontSize: 13,
+    color: "#D97706",
+  },
+  sectionHeader: {
+    display: "flex",
+    alignItems: "center",
+    gap: 10,
+    marginBottom: 20,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: 700,
+    color: "#111827",
+    margin: 0,
+  },
+  timeline: {
+    display: "flex",
+    flexDirection: "column",
+  },
   timelineItem: {
     display: "flex",
-    gap: 14,
-    padding: "14px 0",
-    borderBottom: "1px solid #f1f1e6",
+    gap: 16,
   },
-
-  timelineIcon: {
+  timelineLeft: {
+    position: "relative",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    width: 24,
+  },
+  timelineDot: {
+    width: 10,
+    height: 10,
+    borderRadius: "50%",
+    background: "#2563EB",
+    borderWidth: 2,
+    borderStyle: "solid",
+    borderColor: "#BFDBFE",
+  },
+  timelineLine: {
+    position: "absolute",
+    top: 12,
+    width: 2,
+    height: "calc(100% + 24px)",
+    background: "#E5E7EB",
+  },
+  timelineRight: {
+    flex: 1,
+    paddingBottom: 24,
+  },
+  timelineHeader: {
+    display: "flex",
+    alignItems: "center",
+    gap: 12,
+    marginBottom: 6,
+    flexWrap: "wrap",
+  },
+  timelineStatus: {
+    padding: "2px 10px",
+    borderRadius: 16,
+    fontSize: 11,
+    fontWeight: 600,
+  },
+  timelineDate: {
+    fontSize: 11,
+    color: "#9CA3AF",
+  },
+  timelineActor: {
+    fontSize: 12,
+    color: "#6B7280",
+    margin: 0,
+    marginBottom: 6,
+  },
+  timelineNotes: {
+    fontSize: 13,
+    color: "#4B5563",
+    fontStyle: "italic",
+    margin: 0,
+    padding: "8px 12px",
+    background: "#F9FAFB",
+    borderRadius: 10,
+  },
+  commentsList: {
+    display: "flex",
+    flexDirection: "column",
+    gap: 16,
+    marginBottom: 20,
+  },
+  commentItem: {
+    display: "flex",
+    gap: 12,
+    padding: "16px",
+    background: "#F9FAFB",
+    borderRadius: 12,
+    borderWidth: 1,
+    borderStyle: "solid",
+    borderColor: "#E5E7EB",
+  },
+  commentAvatar: {
     width: 36,
     height: 36,
     borderRadius: "50%",
-    background: "#e8f5ff",
+    background: "linear-gradient(135deg, #667EEA 0%, #764BA2 100%)",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    color: "#004b8d",
+    color: "#fff",
+    fontSize: 14,
+    fontWeight: 600,
     flexShrink: 0,
   },
-
-  timelineStatus: {
-    margin: 0,
-    fontWeight: 600,
-    fontSize: 14,
-    color: "#001f3d",
+  commentContent: {
+    flex: 1,
   },
-
-  timelineMeta: {
-    margin: "6px 0 0",
-    fontSize: 12,
-    color: "#3a5068",
+  commentHeader: {
+    display: "flex",
+    alignItems: "center",
+    gap: 8,
+    flexWrap: "wrap",
+    marginBottom: 6,
   },
-
-  timelineNotes: {
-    margin: "8px 0 0",
+  commentUser: {
     fontSize: 13,
-    color: "#3a5068",
-    fontStyle: "italic",
-    background: "#f8f9ff",
-    padding: "8px 12px",
+    fontWeight: 600,
+    color: "#111827",
+  },
+  adminBadge: {
+    fontSize: 10,
+    padding: "2px 8px",
+    borderRadius: 8,
+    background: "#DBEAFE",
+    color: "#2563EB",
+    fontWeight: 500,
+  },
+  commentDate: {
+    fontSize: 11,
+    color: "#9CA3AF",
+  },
+  commentText: {
+    fontSize: 13,
+    color: "#4B5563",
+    margin: 0,
+    lineHeight: 1.5,
+  },
+  emptyComments: {
+    textAlign: "center",
+    padding: "48px 24px",
+  },
+  emptyText: {
+    fontSize: 16,
+    fontWeight: 500,
+    color: "#111827",
+    marginTop: 16,
+    marginBottom: 4,
+  },
+  emptySubtext: {
+    fontSize: 13,
+    color: "#9CA3AF",
+    margin: 0,
+  },
+  emptyState: {
+    textAlign: "center",
+    padding: "48px 24px",
+    color: "#9CA3AF",
+  },
+  commentClosed: {
+    display: "flex",
+    alignItems: "center",
+    gap: 10,
+    padding: "12px 16px",
+    background: "#F3F4F6",
+    borderRadius: 10,
+    fontSize: 13,
+    color: "#6B7280",
+  },
+  commentForm: {
+    display: "flex",
+    flexDirection: "column",
+    gap: 12,
+    marginTop: 20,
+  },
+  textarea: {
+    width: "100%",
+    padding: "12px 16px",
     borderRadius: 12,
+    borderWidth: 1,
+    borderStyle: "solid",
+    borderColor: "#E5E7EB",
+    fontSize: 14,
+    resize: "vertical",
+    outline: "none",
+    fontFamily: "'Inter', system-ui",
+  },
+  sendBtn: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    padding: "10px 20px",
+    background: "#2563EB",
+    color: "#fff",
+    border: "none",
+    borderRadius: 10,
+    fontSize: 13,
+    fontWeight: 600,
+    cursor: "pointer",
+  },
+  btnSpinner: {
+    width: 16,
+    height: 16,
+    borderWidth: 2,
+    borderStyle: "solid",
+    borderColor: "#fff",
+    borderTopColor: "transparent",
+    borderRadius: "50%",
+    animation: "spin 1s linear infinite",
+  },
+  btnSpinnerSmall: {
+    width: 14,
+    height: 14,
+    borderWidth: 2,
+    borderStyle: "solid",
+    borderColor: "#fff",
+    borderTopColor: "transparent",
+    borderRadius: "50%",
+    animation: "spin 1s linear infinite",
+  },
+  modalOverlay: {
+    position: "fixed",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    background: "rgba(0,0,0,0.5)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 1000,
+  },
+  modal: {
+    background: "#fff",
+    borderRadius: 20,
+    padding: "32px",
+    maxWidth: 400,
+    width: "90%",
+    textAlign: "center",
+  },
+  modalIcon: {
+    width: 64,
+    height: 64,
+    borderRadius: "50%",
+    background: "#FEE2E2",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    margin: "0 auto 16px",
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 700,
+    color: "#111827",
+    margin: 0,
+    marginBottom: 8,
+  },
+  modalText: {
+    fontSize: 14,
+    color: "#6B7280",
+    margin: 0,
+    marginBottom: 24,
+  },
+  modalActions: {
+    display: "flex",
+    gap: 12,
+    justifyContent: "center",
+  },
+  modalCancelBtn: {
+    padding: "8px 20px",
+    background: "#F3F4F6",
+    color: "#6B7280",
+    border: "none",
+    borderRadius: 8,
+    fontSize: 13,
+    fontWeight: 500,
+    cursor: "pointer",
+  },
+  modalDeleteBtn: {
+    display: "flex",
+    alignItems: "center",
+    gap: 6,
+    padding: "8px 20px",
+    background: "#DC2626",
+    color: "#fff",
+    border: "none",
+    borderRadius: 8,
+    fontSize: 13,
+    fontWeight: 500,
+    cursor: "pointer",
   },
 };

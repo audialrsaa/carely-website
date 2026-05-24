@@ -9,7 +9,6 @@ import {
   Shield, 
   FileText, 
   ClipboardList, 
-  Activity, 
   LogOut 
 } from "lucide-react";
 import Image from "next/image";
@@ -24,7 +23,6 @@ export default function SidebarSuperAdmin() {
     { label: "Manajemen Admin", href: "/superadmin/admins", icon: Shield },
     { label: "Semua Laporan", href: "/superadmin/reports", icon: FileText },
     { label: "Audit Log", href: "/superadmin/audit", icon: ClipboardList },
-    { label: "Activity Log", href: "/superadmin/activity", icon: Activity },
   ];
 
   const handleLogout = () => {
