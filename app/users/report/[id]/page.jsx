@@ -13,8 +13,6 @@ import {
   Loader2,
   AlertCircle,
   CheckCircle,
-  User,
-  MessageSquare,
   Image as ImageIcon,
   Activity,
   Send,
@@ -23,6 +21,7 @@ import {
   Trash2,
   X,
   Save,
+  MessageCircle,
 } from "lucide-react";
 
 const API = "http://localhost:5000/api";
@@ -514,7 +513,7 @@ export default function UserReportDetailPage() {
       {/* Comments Card */}
       <div style={styles.card}>
         <div style={styles.sectionHeader}>
-          <MessageSquare size={20} color="#2563EB" />
+          <MessageCircle size={20} color="#2563EB" />
           <h2 style={styles.sectionTitle}>Diskusi</h2>
         </div>
 
@@ -541,7 +540,7 @@ export default function UserReportDetailPage() {
           </div>
         ) : (
           <div style={styles.emptyComments}>
-            <MessageSquare size={48} color="#D1D5DB" />
+            <MessageCircle size={48} color="#D1D5DB" />
             <p style={styles.emptyText}>Belum ada diskusi</p>
             <p style={styles.emptySubtext}>Mulai diskusi dengan menulis komentar di bawah</p>
           </div>
@@ -1052,6 +1051,11 @@ const styles = {
   emptyComments: {
     textAlign: "center",
     padding: "48px 24px",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 12,
   },
   emptyText: {
     fontSize: 16,

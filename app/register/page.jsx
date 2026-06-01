@@ -2,6 +2,7 @@
 
 import { Eye, EyeOff } from 'lucide-react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useState } from 'react';
 
 export default function RegisterPage() {
@@ -78,8 +79,18 @@ export default function RegisterPage() {
       <nav style={{ position: 'fixed', top: 20, left: '50%', transform: 'translateX(-50%)', width: 'calc(100% - 40px)', maxWidth: 1200, zIndex: 100, background: 'rgba(255, 255, 255, 0.98)', backdropFilter: 'blur(16px)', borderRadius: 80, border: '1px solid rgba(0, 75, 141, 0.2)', boxShadow: '0 4px 20px rgba(0, 0, 0, 0.02)', padding: '0 28px', height: 64, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <Link href="/" style={{ textDecoration: 'none' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div style={{ width: 36, height: 36, borderRadius: 12, background: 'linear-gradient(135deg, #004b8d, #43acff)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 12px rgba(0, 75, 141, 0.25)' }}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 21.593c-5.63-5.539-11-10.297-11-14.402 0-3.791 3.068-5.191 5.281-5.191 1.312 0 4.151.501 5.719 4.457 1.59-3.968 4.464-4.447 5.726-4.447 2.54 0 5.274 1.621 5.274 5.181 0 4.069-5.136 8.625-11 14.402z" fill="white" /></svg>
+            <div style={{ width: 36, height: 36, borderRadius: 12, background: '#ffffff', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 12px rgba(0, 75, 141, 0.25)', overflow: 'hidden', padding: 6 }}>
+              <Image
+                src="/images/logo.png"
+                alt="Carely Logo"
+                width={24}
+                height={24}
+                style={{
+                  objectFit: 'contain',
+                  width: '100%',
+                  height: 'auto',
+                }}
+              />
             </div>
             <span style={{ fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif", fontWeight: 700, fontSize: 18, letterSpacing: '-0.3px', color: '#004b8d' }}>Carely</span>
           </div>

@@ -235,9 +235,27 @@ export default function AdminReportsPage() {
                         </span>
                       </td>
                       <td style={styles.td}>
-                        <span style={{ ...styles.badge, backgroundColor: priority.bg, color: priority.color }}>
-                          {priority.label}
-                        </span>
+                        {report.priority_set ? (
+  <span
+    style={{
+      ...styles.badge,
+      backgroundColor: priority.bg,
+      color: priority.color,
+    }}
+  >
+    {priority.label}
+  </span>
+) : (
+  <span
+    style={{
+      ...styles.badge,
+      backgroundColor: "#F3F4F6",
+      color: "#6B7280",
+    }}
+  >
+    Menunggu Prioritas
+  </span>
+)}
                       </td>
                       <td style={styles.td}>
                         <span style={{ ...styles.badge, backgroundColor: status.bg, color: status.color }}>
@@ -252,9 +270,26 @@ export default function AdminReportsPage() {
                       </td>
                       <td style={styles.td}>
                         <div style={styles.actionWrap}>
-                          <Link href={`/admin/reports/${report.id}`} style={styles.detailBtn}>
-                            <Eye size={15} />
-                          </Link>
+                          {report.priority_set ? (
+  <Link
+    href={`/admin/reports/${report.id}`}
+    style={styles.detailBtn}
+  >
+    <Eye size={15} />
+  </Link>
+) : (
+  <button
+    disabled
+    title="Menunggu prioritas dari superadmin"
+    style={{
+      ...styles.detailBtn,
+      opacity: 0.4,
+      cursor: "not-allowed",
+    }}
+  >
+    <Eye size={15} />
+  </button>
+)}
 
                           <button onClick={() => deleteReport(report.id)} style={styles.deleteBtn}>
                             <Trash2 size={15} />

@@ -54,12 +54,14 @@ export default function SuperAdminReportDetailPage() {
 
         // DETAIL LAPORAN
         const reportRes = await fetch(`${API}/reports/${id}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          headers: { Authorization: `Bearer ${token}` },
         });
 
         if (!reportRes.ok) {
+          if (reportRes.status === 401) {
+            localStorage.clear();
+            window.location.href = "/login";
+          }
           const text = await reportRes.text();
           console.error("Detail Error:", text);
           return;
@@ -72,14 +74,11 @@ export default function SuperAdminReportDetailPage() {
 
         try {
           const commentsRes = await fetch(`${API}/comments/report/${id}`, {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
+            headers: { Authorization: `Bearer ${token}` },
           });
 
           if (commentsRes.ok) {
             commentsData = await commentsRes.json();
-            console.log(commentsData);
           }
         } catch (err) {
           console.error("Comments Error:", err);
@@ -87,7 +86,7 @@ export default function SuperAdminReportDetailPage() {
 
         setReport(reportData.report);
         setTimeline(reportData.timeline || []);
-        setComments(commentsData || []);
+        setComments(Array.isArray(commentsData) ? commentsData : []);
 
         setPriority(reportData.report?.priority || "medium");
         setOriginalPriority(reportData.report?.priority || "medium");
@@ -107,6 +106,8 @@ export default function SuperAdminReportDetailPage() {
       diproses: { bg: "#DBEAFE", color: "#2563EB", label: "Diproses", icon: Activity },
       investigasi: { bg: "#E0E7FF", color: "#4F46E5", label: "Investigasi", icon: Activity },
       ditindak: { bg: "#E0E7FF", color: "#4F46E5", label: "Ditindak", icon: Activity },
+      diverifikasi: { bg: "#E0E7FF", color: "#4F46E5", label: "Diverifikasi", icon: CheckCircle },
+      tindak_lanjut: { bg: "#E0E7FF", color: "#4F46E5", label: "Tindak Lanjut", icon: Activity },
       selesai: { bg: "#D1FAE5", color: "#059669", label: "Selesai", icon: CheckCircle },
       ditolak: { bg: "#FEE2E2", color: "#DC2626", label: "Ditolak", icon: AlertTriangle },
       rejected: { bg: "#FEE2E2", color: "#DC2626", label: "Ditolak", icon: AlertTriangle },
@@ -116,10 +117,10 @@ export default function SuperAdminReportDetailPage() {
 
   const getPriorityStyle = (priority) => {
     const map = {
-      emergency: { bg: "#FEE2E2", color: "#DC2626", label: "Emergency", borderColor: "#FCA5A5" },
-      high: { bg: "#FEF3C7", color: "#D97706", label: "High", borderColor: "#FCD34D" },
-      medium: { bg: "#DBEAFE", color: "#2563EB", label: "Medium", borderColor: "#93C5FD" },
-      low: { bg: "#F3F4F6", color: "#6B7280", label: "Low", borderColor: "#D1D5DB" },
+      emergency: { bg: "#FEE2E2", color: "#DC2626", label: "Darurat", borderColor: "#FCA5A5" },
+      high: { bg: "#FEF3C7", color: "#D97706", label: "Tinggi", borderColor: "#FCD34D" },
+      medium: { bg: "#DBEAFE", color: "#2563EB", label: "Sedang", borderColor: "#93C5FD" },
+      low: { bg: "#F3F4F6", color: "#6B7280", label: "Rendah", borderColor: "#D1D5DB" },
     };
     return map[priority] || map.medium;
   };
@@ -217,6 +218,7 @@ export default function SuperAdminReportDetailPage() {
       <div style={styles.notFound}>
         <AlertTriangle size={48} color="#DC2626" />
         <h2 style={styles.notFoundTitle}>Laporan tidak ditemukan</h2>
+        <p style={styles.notFoundText}>Laporan yang Anda cari mungkin telah dihapus</p>
         <Link href="/superadmin/reports" style={styles.backLink}>Kembali ke daftar</Link>
       </div>
     );
@@ -234,17 +236,18 @@ export default function SuperAdminReportDetailPage() {
       </Link>
 
       {/* Header */}
-      <div style={styles.header}>
-        <div>
-          <div style={styles.badgeGroup}>
-            <span style={{ ...styles.statusBadge, backgroundColor: status.bg, color: status.color }}>
-              <StatusIcon size={12} style={{ marginRight: 6 }} />
-              {status.label}
-            </span>
-          </div>
-          <h1 style={styles.title}>{report.title}</h1>
-          <p style={styles.id}>ID: #{report.id}</p>
+      <div style={styles.headerCard}>
+        <div style={styles.badgeGroup}>
+          <span style={{ ...styles.statusBadge, backgroundColor: status.bg, color: status.color }}>
+            <StatusIcon size={12} style={{ marginRight: 6 }} />
+            {status.label}
+          </span>
+          <span style={{ ...styles.priorityBadge, backgroundColor: priorityStyle.bg, color: priorityStyle.color }}>
+            Prioritas: {priorityStyle.label}
+          </span>
         </div>
+        <h1 style={styles.title}>{report.title}</h1>
+        <p style={styles.id}>ID: #{report.id}</p>
       </div>
 
       {/* Description */}
@@ -256,54 +259,54 @@ export default function SuperAdminReportDetailPage() {
       {/* Details Grid */}
       <div style={styles.card}>
         <h2 style={styles.cardTitle}>Informasi Pelapor</h2>
-        <div style={styles.grid}>
-          <div style={styles.gridItem}>
-            <User size={16} color="#6B7280" />
+        <div style={styles.infoGrid}>
+          <div style={styles.infoItem}>
+            <div style={styles.infoIcon}><User size={16} /></div>
             <div>
-              <p style={styles.label}>Nama</p>
-              <p style={styles.value}>{report.reporter_name || "-"}</p>
+              <p style={styles.infoLabel}>Nama</p>
+              <p style={styles.infoValue}>{report.reporter_name || "-"}</p>
             </div>
           </div>
-          <div style={styles.gridItem}>
-            <Mail size={16} color="#6B7280" />
+          <div style={styles.infoItem}>
+            <div style={styles.infoIcon}><Mail size={16} /></div>
             <div>
-              <p style={styles.label}>Email</p>
-              <p style={styles.value}>{report.reporter_email || "-"}</p>
+              <p style={styles.infoLabel}>Email</p>
+              <p style={styles.infoValue}>{report.reporter_email || "-"}</p>
             </div>
           </div>
-          <div style={styles.gridItem}>
-            <Phone size={16} color="#6B7280" />
+          <div style={styles.infoItem}>
+            <div style={styles.infoIcon}><Phone size={16} /></div>
             <div>
-              <p style={styles.label}>Telepon</p>
-              <p style={styles.value}>{report.reporter_phone || "-"}</p>
+              <p style={styles.infoLabel}>Telepon</p>
+              <p style={styles.infoValue}>{report.reporter_phone || "-"}</p>
             </div>
           </div>
-          <div style={styles.gridItem}>
-            <FileText size={16} color="#6B7280" />
+          <div style={styles.infoItem}>
+            <div style={styles.infoIcon}><FileText size={16} /></div>
             <div>
-              <p style={styles.label}>Kategori</p>
-              <p style={styles.value}>{report.category_name || "-"}</p>
+              <p style={styles.infoLabel}>Kategori</p>
+              <p style={styles.infoValue}>{report.category_name || "-"}</p>
             </div>
           </div>
-          <div style={styles.gridItem}>
-            <MapPin size={16} color="#6B7280" />
+          <div style={styles.infoItem}>
+            <div style={styles.infoIcon}><MapPin size={16} /></div>
             <div>
-              <p style={styles.label}>Lokasi Kejadian</p>
-              <p style={styles.value}>{report.incident_location || "-"}</p>
+              <p style={styles.infoLabel}>Lokasi Kejadian</p>
+              <p style={styles.infoValue}>{report.incident_location || "-"}</p>
             </div>
           </div>
-          <div style={styles.gridItem}>
-            <Calendar size={16} color="#6B7280" />
+          <div style={styles.infoItem}>
+            <div style={styles.infoIcon}><Calendar size={16} /></div>
             <div>
-              <p style={styles.label}>Tanggal Kejadian</p>
-              <p style={styles.value}>{formatDate(report.incident_date)}</p>
+              <p style={styles.infoLabel}>Tanggal Kejadian</p>
+              <p style={styles.infoValue}>{formatDate(report.incident_date)}</p>
             </div>
           </div>
-          <div style={styles.gridItem}>
-            <Clock size={16} color="#6B7280" />
+          <div style={styles.infoItem}>
+            <div style={styles.infoIcon}><Clock size={16} /></div>
             <div>
-              <p style={styles.label}>Dibuat Pada</p>
-              <p style={styles.value}>{formatDateTime(report.created_at)}</p>
+              <p style={styles.infoLabel}>Dibuat Pada</p>
+              <p style={styles.infoValue}>{formatDateTime(report.created_at)}</p>
             </div>
           </div>
         </div>
@@ -322,7 +325,7 @@ export default function SuperAdminReportDetailPage() {
         </div>
 
         {isEditingPriority ? (
-          <div style={styles.editPriorityBox}>
+          <div>
             <div style={styles.selectWrapper}>
               <Flag size={16} color="#6B7280" />
               <select
@@ -331,10 +334,10 @@ export default function SuperAdminReportDetailPage() {
                 style={styles.select}
                 disabled={savingPriority}
               >
-                <option value="low">Low - Prioritas Rendah</option>
-                <option value="medium">Medium - Prioritas Sedang</option>
-                <option value="high">High - Prioritas Tinggi</option>
-                <option value="emergency">Emergency - Darurat</option>
+                <option value="low">Rendah</option>
+                <option value="medium">Sedang</option>
+                <option value="high">Tinggi</option>
+                <option value="emergency">Darurat</option>
               </select>
             </div>
             <div style={styles.editActions}>
@@ -381,11 +384,13 @@ export default function SuperAdminReportDetailPage() {
       {report.bukti_foto && (
         <div style={styles.card}>
           <h2 style={styles.cardTitle}>Bukti Foto</h2>
-          <img src={report.bukti_foto} alt="Bukti" style={styles.image} />
+          <div style={styles.imageContainer}>
+            <img src={report.bukti_foto} alt="Bukti" style={styles.image} />
+          </div>
         </div>
       )}
 
-      {/* Komentar Section - Hanya Baca */}
+      {/* Comments Section - Read Only */}
       <div style={styles.card}>
         <div style={styles.commentsHeader}>
           <MessageCircle size={20} color="#2563EB" />
@@ -447,13 +452,13 @@ export default function SuperAdminReportDetailPage() {
                   <div style={styles.timelineRight}>
                     <div style={styles.timelineHeader}>
                       <span style={{ ...styles.timelineStatus, backgroundColor: logStatus.bg, color: logStatus.color }}>
-                        {log.new_status}
+                        {logStatus.label}
                       </span>
                       <span style={styles.timelineDate}>{formatDateTime(log.created_at)}</span>
                     </div>
                     <p style={styles.timelineActor}>
                       {log.changed_by_name || "System"}
-                      {log.changer_role && ` · ${log.changer_role}`}
+                      {log.changer_role && ` · ${log.changer_role === "superadmin" ? "Super Admin" : log.changer_role === "admin" ? "Admin" : log.changer_role}`}
                     </p>
                     {log.notes && <p style={styles.timelineNotes}>"{log.notes}"</p>}
                   </div>
@@ -520,7 +525,12 @@ const styles = {
     fontWeight: 600,
     color: "#111827",
     marginTop: 16,
-    marginBottom: 20,
+    marginBottom: 8,
+  },
+  notFoundText: {
+    fontSize: 14,
+    color: "#6B7280",
+    marginBottom: 24,
   },
   backBtn: {
     display: "inline-flex",
@@ -542,13 +552,31 @@ const styles = {
     fontSize: 14,
     fontWeight: 500,
   },
-  header: {
-    marginBottom: 24,
+  headerCard: {
+    background: "#fff",
+    borderRadius: 20,
+    padding: "28px",
+    marginBottom: 20,
+    borderWidth: 1,
+    borderStyle: "solid",
+    borderColor: "#E5E7EB",
   },
   badgeGroup: {
+    display: "flex",
+    alignItems: "center",
+    gap: 10,
     marginBottom: 12,
+    flexWrap: "wrap",
   },
   statusBadge: {
+    display: "inline-flex",
+    alignItems: "center",
+    padding: "4px 12px",
+    borderRadius: 20,
+    fontSize: 12,
+    fontWeight: 600,
+  },
+  priorityBadge: {
     display: "inline-flex",
     alignItems: "center",
     padding: "4px 12px",
@@ -561,7 +589,7 @@ const styles = {
     fontWeight: 700,
     color: "#111827",
     margin: 0,
-    marginBottom: 4,
+    marginBottom: 8,
   },
   id: {
     fontSize: 12,
@@ -570,18 +598,19 @@ const styles = {
   },
   card: {
     background: "#fff",
-    borderRadius: 16,
-    padding: "24px",
+    borderRadius: 20,
+    padding: "28px",
     marginBottom: 20,
     borderWidth: 1,
     borderStyle: "solid",
     borderColor: "#E5E7EB",
   },
   cardTitle: {
-    fontSize: 16,
-    fontWeight: 600,
+    fontSize: 18,
+    fontWeight: 700,
     color: "#111827",
     margin: 0,
+    marginBottom: 20,
   },
   description: {
     fontSize: 14,
@@ -589,23 +618,33 @@ const styles = {
     color: "#4B5563",
     margin: 0,
   },
-  grid: {
+  infoGrid: {
     display: "grid",
     gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
     gap: 16,
   },
-  gridItem: {
+  infoItem: {
     display: "flex",
     gap: 12,
     alignItems: "flex-start",
   },
-  label: {
+  infoIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    background: "#EFF6FF",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    color: "#2563EB",
+  },
+  infoLabel: {
     fontSize: 11,
     color: "#6B7280",
     margin: 0,
     marginBottom: 2,
   },
-  value: {
+  infoValue: {
     fontSize: 14,
     fontWeight: 500,
     color: "#111827",
@@ -615,7 +654,7 @@ const styles = {
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 16,
+    marginBottom: 20,
   },
   editBtn: {
     display: "inline-flex",
@@ -631,10 +670,9 @@ const styles = {
     cursor: "pointer",
   },
   currentPriority: {
-    display: "flex",
-    alignItems: "center",
-    gap: 16,
-    flexWrap: "wrap",
+    padding: "16px",
+    background: "#F9FAFB",
+    borderRadius: 12,
   },
   priorityValue: {
     display: "inline-block",
@@ -647,25 +685,19 @@ const styles = {
     fontSize: 12,
     color: "#9CA3AF",
     margin: 0,
-  },
-  editPriorityBox: {
-    display: "flex",
-    gap: 12,
-    alignItems: "center",
-    flexWrap: "wrap",
+    marginTop: 12,
   },
   selectWrapper: {
     display: "flex",
     alignItems: "center",
     gap: 10,
-    flex: 1,
-    minWidth: 200,
     padding: "8px 12px",
     background: "#F9FAFB",
     borderRadius: 10,
     borderWidth: 1,
     borderStyle: "solid",
     borderColor: "#E5E7EB",
+    marginBottom: 16,
   },
   select: {
     flex: 1,
@@ -676,29 +708,34 @@ const styles = {
   },
   editActions: {
     display: "flex",
-    gap: 8,
+    gap: 12,
+    marginTop: 8,
   },
   cancelBtn: {
-    display: "inline-flex",
+    flex: 1,
+    display: "flex",
     alignItems: "center",
+    justifyContent: "center",
     gap: 6,
-    padding: "8px 16px",
+    padding: "10px 16px",
     background: "#F3F4F6",
     border: "none",
-    borderRadius: 8,
+    borderRadius: 10,
     fontSize: 13,
     fontWeight: 500,
     color: "#6B7280",
     cursor: "pointer",
   },
   saveBtn: {
-    display: "inline-flex",
+    flex: 1,
+    display: "flex",
     alignItems: "center",
+    justifyContent: "center",
     gap: 6,
-    padding: "8px 16px",
+    padding: "10px 16px",
     background: "#2563EB",
     border: "none",
-    borderRadius: 8,
+    borderRadius: 10,
     fontSize: 13,
     fontWeight: 500,
     color: "#fff",
@@ -714,13 +751,17 @@ const styles = {
     borderRadius: "50%",
     animation: "spin 1s linear infinite",
   },
+  imageContainer: {
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+  },
   image: {
     maxWidth: "100%",
     maxHeight: 400,
     objectFit: "contain",
     borderRadius: 12,
   },
-  // Comments Styles - Read Only
   commentsHeader: {
     display: "flex",
     alignItems: "center",
@@ -791,6 +832,11 @@ const styles = {
   emptyComments: {
     textAlign: "center",
     padding: "48px 24px",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 12,
   },
   emptyText: {
     fontSize: 16,
@@ -804,11 +850,9 @@ const styles = {
     color: "#9CA3AF",
     margin: 0,
   },
-  // Timeline Styles
   timeline: {
     display: "flex",
     flexDirection: "column",
-    gap: 0,
   },
   timelineItem: {
     display: "flex",

@@ -7,33 +7,49 @@ import {
   LayoutDashboard,
   FileText,
   LogOut,
-  Shield,
   User,
-  BarChart3,
+  Bell
 } from "lucide-react";
 import Image from "next/image";
+import { useEffect, useState } from "react";
+
+const API = "http://localhost:5000/api";
 
 export default function SidebarAdmin() {
   const pathname = usePathname();
   const router = useRouter();
+  const [unreadCount, setUnreadCount] = useState(0);
 
   const menuItems = [
-    {
-      label: "Dashboard",
-      href: "/admin",
-      icon: LayoutDashboard,
-    },
-    {
-      label: "Kelola Laporan",
-      href: "/admin/reports",
-      icon: FileText,
-    },
-    {
-      label: "Profile",
-      href: "/admin/profile",
-      icon: User,
-    },
+    { label: "Dashboard", href: "/admin", icon: LayoutDashboard },
+    { label: "Kelola Laporan", href: "/admin/reports", icon: FileText },
+    { label: "Notifikasi", href: "/admin/notification", icon: Bell, hasBadge: true },
+    { label: "Profile", href: "/admin/profile", icon: User },
   ];
+
+  const fetchUnreadCount = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) return;
+
+      const res = await fetch(`${API}/notifications/unread-count`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!res.ok) return;
+
+      const data = await res.json();
+      setUnreadCount(data.total || 0);
+    } catch (err) {
+      console.error("Fetch unread count error:", err);
+    }
+  };
+
+  useEffect(() => {
+    fetchUnreadCount();
+    const interval = setInterval(fetchUnreadCount, 5000);
+    return () => clearInterval(interval);
+  }, []);
 
   const handleLogout = () => {
     localStorage.clear();
@@ -42,124 +58,76 @@ export default function SidebarAdmin() {
   };
 
   return (
-    <aside
-      style={{
-        width: 260,
-        background: "#fff",
-        borderRight: "1px solid rgba(0, 75, 141, 0.08)",
-        display: "flex",
-        flexDirection: "column",
-        minHeight: "100vh",
-        flexShrink: 0,
-      }}
-    >
-      {/* Logo */}
-      <div style={{ padding: "24px 20px", borderBottom: "1px solid rgba(0, 75, 141, 0.08)" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <div
-            style={{
-              width: 40,
-              height: 40,
-              borderRadius: 10,
-              background: "linear-gradient(135deg, #004b8d, #43acff)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              boxShadow: "0 4px 10px rgba(0, 75, 141, 0.25)",
-              overflow: "hidden",
-            }}
-          >
+    <aside style={styles.sidebar}>
+      {/* Logo Section */}
+      <div style={styles.logoSection}>
+        <div style={styles.logoContainer}>
+          <div style={styles.logoBox}>
             <Image
               src="/images/logo.png"
-              alt="Logo"
+              alt="Carely Logo"
               width={32}
               height={32}
-              style={{ objectFit: "contain" }}
+              style={{ objectFit: 'contain' }}
             />
           </div>
           <div>
-            <h1
-              style={{
-                fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif",
-                fontWeight: 700,
-                fontSize: 18,
-                color: "#001f3d",
-                margin: 0,
-              }}
-            >
-              Carely
-            </h1>
-            <p
-              style={{
-                fontFamily: "'Inter', system-ui, sans-serif",
-                fontSize: 10,
-                color: "#3a5068",
-                margin: 0,
-              }}
-            >
-              Admin Panel
-            </p>
+            <h1 style={styles.logoTitle}>Carely</h1>
+            <p style={styles.logoSubtitle}>Admin Panel</p>
           </div>
         </div>
       </div>
 
-      {/* Menu */}
-      <nav style={{ flex: 1, padding: 20, display: "flex", flexDirection: "column", gap: 6 }}>
+      {/* Navigation Menu */}
+      <nav style={styles.nav}>
         {menuItems.map((item) => {
+          const isActive = pathname === item.href;
           const Icon = item.icon;
-          const active = pathname === item.href;
 
           return (
-            <Link
-              key={item.href}
-              href={item.href}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 12,
-                padding: "12px 16px",
-                borderRadius: 12,
-                textDecoration: "none",
-                background: active ? "#f1f1e6" : "transparent",
-                color: active ? "#004b8d" : "#3a5068",
-                fontWeight: active ? 600 : 500,
-                transition: "all 0.2s",
-                fontSize: 14,
-                fontFamily: "'Inter', system-ui, sans-serif",
-              }}
-            >
-              <Icon size={18} />
-              {item.label}
+            <Link key={item.href} href={item.href} style={styles.navLink}>
+              <div
+                style={{
+                  ...styles.navItem,
+                  background: isActive ? '#F3F4F6' : 'transparent',
+                  color: isActive ? '#2563EB' : '#4B5563',
+                }}
+                onMouseEnter={(e) => {
+                  if (!isActive) {
+                    e.currentTarget.style.background = '#F9FAFB';
+                    e.currentTarget.style.color = '#2563EB';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!isActive) {
+                    e.currentTarget.style.background = 'transparent';
+                    e.currentTarget.style.color = '#4B5563';
+                  }
+                }}
+              >
+                <Icon size={18} />
+                <span style={styles.navLabel}>{item.label}</span>
+                {item.hasBadge && unreadCount > 0 && (
+                  <span style={styles.badge}>
+                    {unreadCount > 99 ? "99+" : unreadCount}
+                  </span>
+                )}
+              </div>
             </Link>
           );
         })}
       </nav>
 
-      {/* Logout */}
-      <div style={{ padding: 20, borderTop: "1px solid rgba(0, 75, 141, 0.08)" }}>
+      {/* Logout Button */}
+      <div style={styles.logoutSection}>
         <button
           onClick={handleLogout}
-          style={{
-            width: "100%",
-            padding: "12px 16px",
-            border: "none",
-            borderRadius: 12,
-            background: "#fde8e8",
-            color: "#c0392b",
-            cursor: "pointer",
-            display: "flex",
-            alignItems: "center",
-            gap: 10,
-            fontFamily: "'Inter', system-ui, sans-serif",
-            fontWeight: 500,
-            fontSize: 14,
-            transition: "all 0.2s",
-          }}
+          style={styles.logoutBtn}
           onMouseEnter={(e) => {
-            e.currentTarget.style.background = "#fcc5c5";
+            e.currentTarget.style.background = '#FEE2E2';
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.background = "#fde8e8";
+            e.currentTarget.style.background = '#FEF2F2';
           }}
         >
           <LogOut size={18} />
@@ -169,3 +137,110 @@ export default function SidebarAdmin() {
     </aside>
   );
 }
+
+const styles = {
+  sidebar: {
+    width: 260,
+    height: '100vh',
+    position: 'sticky',
+    top: 0,
+    background: '#fff',
+    borderRight: '1px solid #E5E7EB',
+    display: 'flex',
+    flexDirection: 'column',
+    flexShrink: 0,
+    overflowY: 'auto',
+  },
+  logoSection: {
+    padding: '24px 20px',
+    borderBottom: '1px solid #E5E7EB',
+  },
+  logoContainer: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 12,
+  },
+  logoBox: {
+    width: 40,
+    height: 40,
+    borderRadius: 10,
+    background: 'linear-gradient(135deg, #004b8d, #43acff)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    boxShadow: '0 4px 10px rgba(0, 75, 141, 0.25)',
+    overflow: 'hidden',
+  },
+  logoTitle: {
+    fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif",
+    fontWeight: 700,
+    fontSize: 18,
+    color: '#111827',
+    margin: 0,
+  },
+  logoSubtitle: {
+    fontFamily: "'Inter', system-ui, sans-serif",
+    fontSize: 10,
+    color: '#6B7280',
+    margin: 0,
+  },
+  nav: {
+    flex: 1,
+    padding: '20px 16px',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 4,
+  },
+  navLink: {
+    textDecoration: 'none',
+  },
+  navItem: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 12,
+    padding: '10px 16px',
+    borderRadius: 10,
+    fontSize: 14,
+    fontFamily: "'Inter', system-ui, sans-serif",
+    fontWeight: 500,
+    cursor: 'pointer',
+    transition: 'all 0.2s',
+  },
+  navLabel: {
+    flex: 1,
+  },
+  badge: {
+    background: '#EF4444',
+    color: '#fff',
+    minWidth: 20,
+    height: 20,
+    borderRadius: 9999,
+    fontSize: 11,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: '0 6px',
+    fontWeight: 600,
+  },
+  logoutSection: {
+    padding: '20px',
+    borderTop: '1px solid #E5E7EB',
+  },
+  logoutBtn: {
+    width: '100%',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+    padding: '10px 16px',
+    borderRadius: 10,
+    border: 'none',
+    background: '#FEF2F2',
+    cursor: 'pointer',
+    fontSize: 14,
+    fontFamily: "'Inter', system-ui, sans-serif",
+    fontWeight: 600,
+    color: '#DC2626',
+    transition: 'all 0.2s',
+  },
+};

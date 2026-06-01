@@ -1,17 +1,36 @@
 // app/users/layout.jsx
 "use client";
 
-import SidebarUser from "@/app/components/sidebarUser";
+import SidebarUser from "../components/sidebarUser";
 
 export default function UsersLayout({ children }) {
   return (
-    <div className="flex min-h-screen bg-gray-50">
+    <div style={styles.container}>
       <SidebarUser />
-      <main className="flex-1 p-6 lg:p-8 overflow-y-auto">
-        <div className="max-w-5xl mx-auto">
+      <main style={styles.main}>
+        <div style={styles.content}>
           {children}
         </div>
       </main>
     </div>
   );
 }
+
+const styles = {
+  container: {
+    display: 'flex',
+    minHeight: '100vh',
+    background: '#F9FAFB',
+  },
+  main: {
+    flex: 1,
+    overflowY: 'auto',
+    height: '100vh',
+    position: 'relative',
+  },
+  content: {
+    maxWidth: 1000,
+    margin: '0 auto',
+    padding: '32px 40px',
+  },
+};
