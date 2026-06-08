@@ -1,12 +1,22 @@
-// ============================================================
 // app/superadmin/layout.jsx
-// Layout Superadmin
-// ============================================================
 "use client";
 
 import SidebarSuperAdmin from "../components/sidebarSuperAdmin";
+import { useEffect, useState } from "react";
 
 export default function SuperAdminLayout({ children }) {
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
   return (
     <div
       style={{
@@ -16,14 +26,11 @@ export default function SuperAdminLayout({ children }) {
         fontFamily: "'Inter', system-ui, sans-serif",
       }}
     >
-      {/* Sidebar */}
       <SidebarSuperAdmin />
-
-      {/* Main Content */}
       <main
         style={{
           flex: 1,
-          padding: 24,
+          padding: isMobile ? "80px 16px 16px 16px" : "24px",
           overflowY: "auto",
         }}
       >

@@ -8,31 +8,51 @@ import Swal from "sweetalert2";
 const API = "http://localhost:5000/api";
 
 export default function SuperAdminUsersPage() {
+  // state untuk menyimpan data semua user
   const [users, setUsers] = useState([]);
+
+  // state untuk menyimpan keyword pencarian
   const [search, setSearch] = useState("");
+
+  // state loading saat data sedang diambil
   const [loading, setLoading] = useState(true);
 
+  // mengambil seluruh data user dari backend
   const fetchUsers = async () => {
     try {
+      // mengambil token login dari localStorage
       const token = localStorage.getItem("token");
+
+      // request data user ke endpoint backend
       const res = await fetch(`${API}/admin/users`, {
         headers: { Authorization: `Bearer ${token}` },
       });
+
+      // mengubah response menjadi json
       const data = await res.json();
+
+      // menyimpan data user ke state
       setUsers(Array.isArray(data) ? data : []);
     } catch (err) {
+      // menampilkan error di console
       console.error("Fetch Users Error:", err);
+
+      // menampilkan popup jika gagal mengambil data
       Swal.fire({
         icon: "error",
         title: "Gagal",
         text: "Gagal mengambil data user",
       });
     } finally {
+      // menghentikan loading
       setLoading(false);
     }
   };
 
+  // menghapus user berdasarkan id
   const deleteUser = async (id, name) => {
+
+    // popup konfirmasi sebelum user dihapus
     const result = await Swal.fire({
       title: "Hapus user?",
       html: `User <strong>${name}</strong> akan dihapus permanen`,
@@ -44,17 +64,23 @@ export default function SuperAdminUsersPage() {
       cancelButtonText: "Batal",
     });
 
+    // jika batal maka fungsi berhenti
     if (!result.isConfirmed) return;
 
     try {
+      // mengambil token login
       const token = localStorage.getItem("token");
+
+      // request delete user ke backend
       const res = await fetch(`${API}/admin/users/${id}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
       });
 
+      // mengambil response json
       const data = await res.json();
 
+      // jika gagal hapus
       if (!res.ok) {
         return Swal.fire({
           icon: "error",
@@ -63,6 +89,7 @@ export default function SuperAdminUsersPage() {
         });
       }
 
+      // popup berhasil hapus user
       Swal.fire({
         icon: "success",
         title: "Berhasil",
@@ -71,9 +98,13 @@ export default function SuperAdminUsersPage() {
         showConfirmButton: false,
       });
 
+      // refresh data user setelah penghapusan
       fetchUsers();
     } catch (err) {
+      // menampilkan error di console
       console.error("Delete User Error:", err);
+
+      // popup jika terjadi error server
       Swal.fire({
         icon: "error",
         title: "Server Error",
@@ -82,23 +113,32 @@ export default function SuperAdminUsersPage() {
     }
   };
 
+  // menjalankan fetchUsers saat halaman pertama kali dibuka
   useEffect(() => {
     fetchUsers();
   }, []);
 
+  // filter user berdasarkan nama atau email
   const filteredUsers = users.filter(
     (user) =>
       user.full_name?.toLowerCase().includes(search.toLowerCase()) ||
       user.email?.toLowerCase().includes(search.toLowerCase())
   );
 
+  // tampilan loading saat data masih dimuat
   if (loading) {
     return (
       <div style={styles.loadingWrap}>
         <div style={styles.loadingCard}>
           <div style={styles.spinner}></div>
-          <p style={styles.loadingText}>Memuat data user...</p>
+
+          {/* teks loading */}
+          <p style={styles.loadingText}>
+            Memuat data user...
+          </p>
         </div>
+
+        {/* animasi spinner */}
         <style>{`
           @keyframes spin {
             to { transform: rotate(360deg); }
@@ -107,7 +147,7 @@ export default function SuperAdminUsersPage() {
       </div>
     );
   }
-
+  
   return (
     <div style={styles.container}>
       {/* Header */}

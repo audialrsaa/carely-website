@@ -1,33 +1,53 @@
 "use client";
-
 import { useEffect, useState } from "react";
 import { Bell, CheckCheck, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
+// menyimpan base url backend api
 const API = "http://localhost:5000/api";
 
+
+// admin notifications page
 export default function AdminNotificationsPage() {
+
+  // digunakan untuk berpindah halaman secara programatik
   const router = useRouter();
+
+  // menyimpan daftar notifikasi
   const [notifications, setNotifications] = useState([]);
+
+  // menyimpan status loading saat mengambil data
   const [loading, setLoading] = useState(true);
+
+  // menyimpan status loading saat menandai semua notifikasi
   const [markingAll, setMarkingAll] = useState(false);
 
+  // menjalankan fetchNotifications saat halaman pertama kali dibuka
   useEffect(() => {
     fetchNotifications();
   }, []);
 
+  // mengambil seluruh notifikasi milik admin
   const fetchNotifications = async () => {
     try {
+
+      // mengambil token login dari local storage
       const token = localStorage.getItem("token");
+
+      // jika token tidak ada maka arahkan ke login
       if (!token) {
         window.location.href = "/login";
         return;
       }
 
+      // mengambil data notifikasi dari backend
       const res = await fetch(`${API}/notifications`, {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: {
+          Authorization: `Bearer ${token}`
+        },
       });
 
+      // jika token tidak valid maka logout otomatis
       if (!res.ok) {
         if (res.status === 401) {
           localStorage.clear();
@@ -36,62 +56,124 @@ export default function AdminNotificationsPage() {
         return;
       }
 
+      // menyimpan data notifikasi ke state
       const data = await res.json();
-      setNotifications(Array.isArray(data) ? data : []);
+      setNotifications(
+        Array.isArray(data)
+          ? data
+          : []
+      );
+
     } catch (err) {
+
+      // menampilkan error di console
       console.error(err);
+
     } finally {
+
+      // menghentikan loading
       setLoading(false);
     }
   };
 
+ 
+  // membuka notifikasi dan menandainya sebagai dibaca
   const openNotification = async (notif) => {
     try {
+
+      // mengambil token login
       const token = localStorage.getItem("token");
 
+      // jika notifikasi belum dibaca
+      // ubah status menjadi sudah dibaca
       if (!notif.is_read) {
-        await fetch(`${API}/notifications/${notif.id}/read`, {
-          method: "PUT",
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        await fetch(
+          `${API}/notifications/${notif.id}/read`,
+          {
+            method: "PUT",
+            headers: {
+              Authorization: `Bearer ${token}`
+            },
+          }
+        );
       }
 
+      // jika notifikasi terkait laporan
+      // arahkan ke halaman detail laporan
       if (notif.report_id) {
-        router.push(`/admin/reports/${notif.report_id}`);
+        router.push(
+          `/admin/reports/${notif.report_id}`
+        );
       }
+
     } catch (err) {
+
+      // menampilkan error di console
       console.error(err);
     }
   };
 
+  // mark all read
   const markAllRead = async () => {
     try {
+
+      // menampilkan loading button
       setMarkingAll(true);
+
+      // mengambil token login
       const token = localStorage.getItem("token");
 
-      await fetch(`${API}/notifications/mark-all-read`, {
-        method: "PUT",
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      // memanggil endpoint mark all read
+      await fetch(
+        `${API}/notifications/mark-all-read`,
+        {
+          method: "PUT",
+          headers: {
+            Authorization: `Bearer ${token}`
+          },
+        }
+      );
 
+      // mengambil ulang data notifikasi terbaru
       fetchNotifications();
+
     } catch (err) {
+
+      // menampilkan error di console
       console.error(err);
+
     } finally {
+
+      // menghentikan loading button
       setMarkingAll(false);
     }
   };
 
+  // get notification icon
   const getNotificationIcon = (type) => {
-    if (type?.includes("report")) return <Bell size={18} />;
+
+    // jika notifikasi terkait laporan
+    if (type?.includes("report")) {
+      return <Bell size={18} />;
+    }
+
+    // icon default
     return <Bell size={18} />;
   };
 
+  // menampilkan loading saat data masih diambil
   if (loading) {
     return (
       <div style={styles.loadingWrap}>
         <div style={styles.spinner}></div>
-        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+
+        <style>{`
+          @keyframes spin {
+            to {
+              transform: rotate(360deg);
+            }
+          }
+        `}</style>
       </div>
     );
   }

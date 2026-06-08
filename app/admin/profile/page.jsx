@@ -1,5 +1,4 @@
 "use client";
-
 import { useEffect, useState } from "react";
 import {
   User,
@@ -10,51 +9,79 @@ import {
   Loader2,
 } from "lucide-react";
 
+// menyimpan base url backend api
 const API = "http://localhost:5000/api";
 
+// admin profile page
 export default function AdminProfilePage() {
+
+  // menyimpan data profil admin
   const [profile, setProfile] = useState(null);
+
+  // menyimpan status loading
   const [loading, setLoading] = useState(true);
 
+  // menjalankan fetchProfile saat halaman pertama kali dibuka
   useEffect(() => {
     fetchProfile();
   }, []);
 
+
+  // mengambil data profil admin yang sedang login
   const fetchProfile = async () => {
     try {
+
+      // mengambil token login dari local storage
       const token = localStorage.getItem("token");
 
+      // mengambil data profil dari backend
       const res = await fetch(`${API}/users/profile`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
 
+      // mengubah response menjadi json
       const data = await res.json();
 
+      // jika request gagal tampilkan pesan error
       if (!res.ok) {
         alert(data.message);
         return;
       }
 
+      // menyimpan data profil ke state
       setProfile(data);
+
     } catch (err) {
+
+      // menampilkan error ke console
       console.error(err);
+
     } finally {
+
+      // menghentikan loading
       setLoading(false);
     }
   };
 
+  // menampilkan animasi loading saat data profilmmasih diambil dari backend
   if (loading) {
     return (
       <div style={styles.loadingWrap}>
         <div style={styles.loadingCard}>
           <div style={styles.spinner}></div>
-          <p style={styles.loadingText}>Memuat profil...</p>
+
+          <p style={styles.loadingText}>
+            Memuat profil...
+          </p>
         </div>
+
         <style>{`
           @keyframes spin {
-            to { transform: rotate(360deg); }
+            to {
+              transform: rotate(360deg);
+            }
           }
         `}</style>
       </div>

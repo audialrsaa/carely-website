@@ -18,66 +18,184 @@ import {
 const API = "http://localhost:5000/api";
 
 export default function SuperAdminAuditPage() {
+
+  // menyimpan seluruh data audit log
   const [logs, setLogs] = useState([]);
+
+  // menyimpan status loading halaman
   const [loading, setLoading] = useState(true);
+
+  // menyimpan keyword pencarian
   const [search, setSearch] = useState("");
+
+  // menyimpan filter role
   const [filterRole, setFilterRole] = useState("all");
 
+  // mengambil data audit log saat halaman dibuka
   useEffect(() => {
+
     const fetchLogs = async () => {
       try {
+
+        // mengambil token login
         const token = localStorage.getItem("token");
-        const res = await fetch(`${API}/admin/audit-logs`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+
+        // request audit log ke backend
+        const res = await fetch(
+          `${API}/admin/audit-logs`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        // mengubah response menjadi json
         const data = await res.json();
-        setLogs(Array.isArray(data) ? data : []);
+
+        // menyimpan audit log ke state
+        setLogs(
+          Array.isArray(data)
+            ? data
+            : []
+        );
+
       } catch (err) {
+
+        // menampilkan error di console
         console.error(err);
+
       } finally {
+
+        // menghentikan loading
         setLoading(false);
       }
     };
+
     fetchLogs();
+
   }, []);
 
+  // get status style
   const getStatusStyle = (status) => {
+
     const map = {
-      pending: { bg: "#FEF3C7", color: "#D97706" },
-      diproses: { bg: "#DBEAFE", color: "#2563EB" },
-      investigasi: { bg: "#E0E7FF", color: "#4F46E5" },
-      ditindak: { bg: "#E0E7FF", color: "#4F46E5" },
-      diverifikasi: { bg: "#DBEAFE", color: "#2563EB" },
-      selesai: { bg: "#D1FAE5", color: "#059669" },
-      ditolak: { bg: "#FEE2E2", color: "#DC2626" },
-      rejected: { bg: "#FEE2E2", color: "#DC2626" },
+
+      pending: {
+        bg: "#FEF3C7",
+        color: "#D97706",
+      },
+
+      diproses: {
+        bg: "#DBEAFE",
+        color: "#2563EB",
+      },
+
+      investigasi: {
+        bg: "#E0E7FF",
+        color: "#4F46E5",
+      },
+
+      ditindak: {
+        bg: "#E0E7FF",
+        color: "#4F46E5",
+      },
+
+      diverifikasi: {
+        bg: "#DBEAFE",
+        color: "#2563EB",
+      },
+
+      selesai: {
+        bg: "#D1FAE5",
+        color: "#059669",
+      },
+
+      ditolak: {
+        bg: "#FEE2E2",
+        color: "#DC2626",
+      },
+
+      rejected: {
+        bg: "#FEE2E2",
+        color: "#DC2626",
+      },
     };
-    return map[status] || { bg: "#F3F4F6", color: "#6B7280" };
+
+    // mengembalikan warna sesuai status
+    return (
+      map[status] || {
+        bg: "#F3F4F6",
+        color: "#6B7280",
+      }
+    );
   };
 
+  // filtered logs
+  // melakukan pencarian dan filter data audit log
   const filteredLogs = logs.filter((log) => {
-    const matchesSearch = 
-      log.report_title?.toLowerCase().includes(search.toLowerCase()) ||
-      log.changed_by_name?.toLowerCase().includes(search.toLowerCase()) ||
-      log.notes?.toLowerCase().includes(search.toLowerCase());
-    
-    const matchesRole = filterRole === "all" || log.changer_role === filterRole;
-    
-    return matchesSearch && matchesRole;
+
+    // filter berdasarkan keyword pencarian
+    const matchesSearch =
+      log.report_title
+        ?.toLowerCase()
+        .includes(search.toLowerCase()) ||
+
+      log.changed_by_name
+        ?.toLowerCase()
+        .includes(search.toLowerCase()) ||
+
+      log.notes
+        ?.toLowerCase()
+        .includes(search.toLowerCase());
+
+    // filter berdasarkan role
+    const matchesRole =
+      filterRole === "all" ||
+      log.changer_role === filterRole;
+
+    // hanya tampilkan data yang sesuai filter
+    return (
+      matchesSearch &&
+      matchesRole
+    );
   });
 
-  const uniqueRoles = [...new Set(logs.map(log => log.changer_role).filter(Boolean))];
+  // ======================================================
+  // unique roles
+  // mengambil daftar role unik dari audit log
+  // untuk kebutuhan dropdown filter
+  // ======================================================
+  const uniqueRoles = [
+    ...new Set(
+      logs
+        .map(
+          (log) => log.changer_role
+        )
+        .filter(Boolean)
+    ),
+  ];
 
+  // ======================================================
+  // loading state
+  // menampilkan loading saat data belum selesai dimuat
+  // ======================================================
   if (loading) {
     return (
       <div style={styles.loadingWrap}>
         <div style={styles.loadingCard}>
           <div style={styles.spinner}></div>
-          <p style={styles.loadingText}>Memuat audit log...</p>
+
+          <p style={styles.loadingText}>
+            memuat audit log...
+          </p>
         </div>
+
         <style>{`
           @keyframes spin {
-            to { transform: rotate(360deg); }
+            to {
+              transform: rotate(360deg);
+            }
           }
         `}</style>
       </div>

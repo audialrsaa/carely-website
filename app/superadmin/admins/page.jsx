@@ -7,11 +7,20 @@ import Swal from "sweetalert2";
 const API = "http://localhost:5000/api";
 
 export default function SuperAdminAdminsPage() {
+
+  // menyimpan daftar admin
   const [admins, setAdmins] = useState([]);
+
+  // menyimpan status loading saat mengambil data admin
   const [loading, setLoading] = useState(true);
+
+  // menyimpan status loading saat proses tambah admin
   const [submitting, setSubmitting] = useState(false);
+
+  // menyimpan status tampil/sembunyi modal
   const [showModal, setShowModal] = useState(false);
 
+  // menyimpan data form admin baru
   const [form, setForm] = useState({
     full_name: "",
     email: "",
@@ -19,31 +28,54 @@ export default function SuperAdminAdminsPage() {
     phone: "",
   });
 
+  // fetch admins
   const fetchAdmins = async () => {
     try {
+
+      // mengambil token login
       const token = localStorage.getItem("token");
 
+      // request data admin ke backend
       const res = await fetch(`${API}/admin/admins`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
 
+      // mengubah response menjadi json
       const data = await res.json();
-      setAdmins(Array.isArray(data) ? data : []);
+
+      // menyimpan data admin ke state
+      setAdmins(
+        Array.isArray(data)
+          ? data
+          : []
+      );
+
     } catch (err) {
+
+      // menampilkan error di console
       console.error(err);
+
+      // menampilkan alert gagal
       Swal.fire({
         icon: "error",
         title: "Gagal",
         text: "Gagal mengambil data admin",
       });
+
     } finally {
+
+      // menghentikan loading
       setLoading(false);
     }
   };
-
+  
+  // reset form
+  // mengosongkan seluruh field form admin
+  
   const resetForm = () => {
+
     setForm({
       full_name: "",
       email: "",
@@ -52,51 +84,86 @@ export default function SuperAdminAdminsPage() {
     });
   };
 
+  // handle open modal
+  // membuka modal tambah admin
   const handleOpenModal = () => {
+
+    // reset form terlebih dahulu
     resetForm();
+
+    // tampilkan modal
     setShowModal(true);
   };
 
+  // handle close modal
+  // menutup modal tambah admin
   const handleCloseModal = () => {
+
+    // sembunyikan modal
     setShowModal(false);
+
+    // kosongkan form
     resetForm();
   };
 
+  // create admin
   const createAdmin = async () => {
-    if (!form.full_name.trim() || !form.email.trim() || !form.password.trim() || !form.phone.trim()) {
+
+    // validasi seluruh field wajib diisi
+    if (
+      !form.full_name.trim() ||
+      !form.email.trim() ||
+      !form.password.trim() ||
+      !form.phone.trim()
+    ) {
+
       Swal.fire({
         icon: "warning",
         title: "Field wajib diisi",
         text: "Semua field harus diisi",
       });
+
       return;
     }
 
+    // aktifkan loading submit
     setSubmitting(true);
 
     try {
+
+      // mengambil token login
       const token = localStorage.getItem("token");
 
+      // mengirim data admin ke backend
       const res = await fetch(`${API}/admin/admins`, {
         method: "POST",
+
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
+
         body: JSON.stringify(form),
       });
 
+      // mengubah response menjadi json
       const data = await res.json();
 
+      // jika request gagal
       if (!res.ok) {
+
         Swal.fire({
           icon: "error",
           title: "Gagal",
-          text: data.message || "Gagal membuat admin",
+          text:
+            data.message ||
+            "Gagal membuat admin",
         });
+
         return;
       }
 
+      // notifikasi berhasil
       Swal.fire({
         icon: "success",
         title: "Berhasil",
@@ -105,21 +172,36 @@ export default function SuperAdminAdminsPage() {
         showConfirmButton: false,
       });
 
+      // tutup modal
       handleCloseModal();
+
+      // refresh data admin
       fetchAdmins();
+
     } catch (err) {
+
       console.error(err);
+
       Swal.fire({
         icon: "error",
         title: "Server Error",
         text: "Terjadi kesalahan",
       });
+
     } finally {
+
+      // matikan loading submit
       setSubmitting(false);
     }
   };
 
-  const deleteAdmin = async (id, name) => {
+  // delete admin
+  const deleteAdmin = async (
+    id,
+    name
+  ) => {
+
+    // konfirmasi hapus admin
     const result = await Swal.fire({
       title: "Hapus admin?",
       html: `Admin <strong>${name}</strong> akan dihapus permanen`,
@@ -131,28 +213,41 @@ export default function SuperAdminAdminsPage() {
       cancelButtonText: "Batal",
     });
 
+    // jika batal
     if (!result.isConfirmed) return;
 
     try {
+
+      // mengambil token login
       const token = localStorage.getItem("token");
 
-      const res = await fetch(`${API}/admin/admins/${id}`, {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      // request hapus admin ke backend
+      const res = await fetch(
+        `${API}/admin/admins/${id}`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
+      // mengubah response menjadi json
       const data = await res.json();
 
+      // jika gagal
       if (!res.ok) {
+
         return Swal.fire({
           icon: "error",
           title: "Gagal",
-          text: data.message || "Gagal menghapus admin",
+          text:
+            data.message ||
+            "Gagal menghapus admin",
         });
       }
 
+      // notifikasi berhasil
       Swal.fire({
         icon: "success",
         title: "Berhasil",
@@ -161,9 +256,13 @@ export default function SuperAdminAdminsPage() {
         showConfirmButton: false,
       });
 
+      // refresh data admin
       fetchAdmins();
+
     } catch (err) {
+
       console.error(err);
+
       Swal.fire({
         icon: "error",
         title: "Server Error",
@@ -172,25 +271,36 @@ export default function SuperAdminAdminsPage() {
     }
   };
 
+  // mengambil data admin saat halaman pertama dibuka
   useEffect(() => {
+
     fetchAdmins();
+
   }, []);
 
+  // loading state
   if (loading) {
     return (
       <div style={styles.loadingWrap}>
         <div style={styles.loadingCard}>
           <div style={styles.spinner}></div>
-          <p style={styles.loadingText}>Memuat data admin...</p>
+
+          <p style={styles.loadingText}>
+            memuat data admin...
+          </p>
         </div>
+
         <style>{`
           @keyframes spin {
-            to { transform: rotate(360deg); }
+            to {
+              transform: rotate(360deg);
+            }
           }
         `}</style>
       </div>
     );
   }
+
 
   return (
     <div style={styles.container}>

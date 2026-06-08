@@ -4,47 +4,167 @@ import { Eye, EyeOff } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useState } from 'react';
+import Swal from 'sweetalert2';
 
 export default function RegisterPage() {
+
+  // menyimpan data form registrasi
   const [formData, setFormData] = useState({
-    fullName: '', email: '', password: '', confirmPassword: '', agreeTerms: false,
+    fullName: '',
+    email: '',
+    phone: '',
+    password: '',
+    agreeTerms: false,
   });
+
+  // menyimpan status loading saat registrasi
   const [isLoading, setIsLoading] = useState(false);
+
+  // menyimpan status tampil/sembunyi password
   const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  // menyimpan pesan error validasi form
   const [errors, setErrors] = useState({});
 
+  // validate form
   const validateForm = () => {
+
     const newErrors = {};
-    if (!formData.fullName.trim()) newErrors.fullName = 'Nama lengkap harus diisi';
-    if (!formData.email.trim()) newErrors.email = 'Email harus diisi';
-    else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = 'Email tidak valid';
-    if (!formData.password) newErrors.password = 'Password harus diisi';
-    else if (formData.password.length < 6) newErrors.password = 'Password minimal 6 karakter';
-    if (!formData.confirmPassword) newErrors.confirmPassword = 'Konfirmasi password harus diisi';
-    else if (formData.password !== formData.confirmPassword) newErrors.confirmPassword = 'Password tidak cocok';
-    if (!formData.agreeTerms) newErrors.agreeTerms = 'Anda harus menyetujui syarat & ketentuan';
+
+    // validasi nama lengkap
+    if (!formData.fullName.trim()) {
+      newErrors.fullName =
+        'Nama lengkap harus diisi';
+    }
+
+    // validasi email kosong
+    if (!formData.email.trim()) {
+      newErrors.email =
+        'Email harus diisi';
+    }
+
+    // validasi format email
+    else if (
+      !/\S+@\S+\.\S+/.test(formData.email)
+    ) {
+      newErrors.email =
+        'Email tidak valid';
+    }
+
+    // validasi nomor telepon
+    if (!formData.phone.trim()) {
+      newErrors.phone =
+        'Nomor telepon harus diisi';
+    }
+
+    // validasi password kosong
+    if (!formData.password) {
+      newErrors.password =
+        'Password harus diisi';
+    }
+
+    // validasi panjang password
+    else if (
+      formData.password.length < 6
+    ) {
+      newErrors.password =
+        'Password minimal 6 karakter';
+    }
+
+    // validasi persetujuan syarat dan ketentuan
+    if (!formData.agreeTerms) {
+      newErrors.agreeTerms =
+        'Anda harus menyetujui syarat & ketentuan';
+    }
+
+    // menyimpan hasil validasi
     setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+
+    // mengembalikan status validasi
+    return (
+      Object.keys(newErrors).length === 0
+    );
   };
 
+  // handle submit
   const handleSubmit = async (e) => {
+
+    // mencegah reload halaman
     e.preventDefault();
+
+    // menghentikan proses jika validasi gagal
     if (!validateForm()) return;
+
+    // mengaktifkan loading
     setIsLoading(true);
+
     try {
-      const response = await fetch('http://127.0.0.1:5000/api/auth/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ full_name: formData.fullName, email: formData.email, password: formData.password }),
+
+      // mengirim data registrasi ke backend
+      const response = await fetch(
+        'http://127.0.0.1:5000/api/auth/register',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type':
+              'application/json'
+          },
+
+          body: JSON.stringify({
+            full_name: formData.fullName,
+            email: formData.email,
+            phone: formData.phone,
+            password: formData.password,
+          }),
+        }
+      );
+
+      // mengubah response menjadi json
+      const data =
+        await response.json();
+
+      // jika registrasi gagal tampilkan pesan error
+      if (!response.ok) {
+
+        Swal.fire({
+          icon: 'error',
+          title: 'Registrasi Gagal',
+          text:
+            data.message ||
+            'Terjadi kesalahan saat mendaftar',
+          confirmButtonColor: '#004b8d',
+        });
+
+        return;
+      }
+
+      // menampilkan notifikasi registrasi berhasil
+      await Swal.fire({
+        icon: 'success',
+        title: 'Registrasi Berhasil!',
+        text:
+          'Akun Anda telah dibuat. Silakan login.',
+        timer: 1500,
+        showConfirmButton: false,
       });
-      const data = await response.json();
-      if (!response.ok) { alert(data.message || 'Registrasi gagal'); return; }
-      alert('Registrasi berhasil! Silakan login.');
+
+      // mengarahkan pengguna ke halaman login
       window.location.href = '/login';
+
     } catch (error) {
-      alert('Tidak dapat terhubung ke server backend.');
+
+      // menampilkan pesan jika koneksi ke server gagal
+      Swal.fire({
+        icon: 'error',
+        title: 'Koneksi Gagal',
+        text:
+          'Tidak dapat terhubung ke server backend.',
+        confirmButtonColor: '#004b8d',
+      });
+
     } finally {
+
+      // menghentikan loading
       setIsLoading(false);
     }
   };
@@ -60,8 +180,14 @@ export default function RegisterPage() {
     ...inputStyle(hasError), padding: '14px 50px 14px 18px',
   });
 
-  const onFocus = (e) => { e.currentTarget.style.borderColor = '#004b8d'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(0, 75, 141, 0.1)'; };
-  const onBlur = (e, hasError) => { e.currentTarget.style.borderColor = hasError ? '#e74c3c' : 'rgba(0, 75, 141, 0.2)'; e.currentTarget.style.boxShadow = 'none'; };
+  const onFocus = (e) => {
+    e.currentTarget.style.borderColor = '#004b8d';
+    e.currentTarget.style.boxShadow = '0 0 0 3px rgba(0, 75, 141, 0.1)';
+  };
+  const onBlur = (e, hasError) => {
+    e.currentTarget.style.borderColor = hasError ? '#e74c3c' : 'rgba(0, 75, 141, 0.2)';
+    e.currentTarget.style.boxShadow = 'none';
+  };
 
   const eyeBtnStyle = {
     position: 'absolute', right: 16, top: '50%', transform: 'translateY(-50%)',
@@ -80,25 +206,17 @@ export default function RegisterPage() {
         <Link href="/" style={{ textDecoration: 'none' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <div style={{ width: 36, height: 36, borderRadius: 12, background: '#ffffff', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 12px rgba(0, 75, 141, 0.25)', overflow: 'hidden', padding: 6 }}>
-              <Image
-                src="/images/logo.png"
-                alt="Carely Logo"
-                width={24}
-                height={24}
-                style={{
-                  objectFit: 'contain',
-                  width: '100%',
-                  height: 'auto',
-                }}
-              />
+              <Image src="/images/logo.png" alt="Carely Logo" width={24} height={24} style={{ objectFit: 'contain', width: '100%', height: 'auto' }} />
             </div>
             <span style={{ fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif", fontWeight: 700, fontSize: 18, letterSpacing: '-0.3px', color: '#004b8d' }}>Carely</span>
           </div>
         </Link>
         <Link href="/login">
-          <button style={{ background: 'transparent', color: '#004b8d', border: '1.5px solid rgba(0, 75, 141, 0.4)', borderRadius: 40, padding: '8px 24px', fontFamily: "'Inter', system-ui, sans-serif", fontWeight: 600, fontSize: 14, cursor: 'pointer', transition: 'all 0.2s ease' }}
+          <button
+            style={{ background: 'transparent', color: '#004b8d', border: '1.5px solid rgba(0, 75, 141, 0.4)', borderRadius: 40, padding: '8px 24px', fontFamily: "'Inter', system-ui, sans-serif", fontWeight: 600, fontSize: 14, cursor: 'pointer', transition: 'all 0.2s ease' }}
             onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(0, 75, 141, 0.05)'; e.currentTarget.style.borderColor = '#004b8d'; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = 'rgba(0, 75, 141, 0.4)'; }}>
+            onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = 'rgba(0, 75, 141, 0.4)'; }}
+          >
             Masuk
           </button>
         </Link>
@@ -129,6 +247,13 @@ export default function RegisterPage() {
             {errors.email && <p style={{ color: '#e74c3c', fontSize: 12, marginTop: 6, fontFamily: "'Inter', system-ui" }}>{errors.email}</p>}
           </div>
 
+          {/* Phone */}
+          <div style={{ marginBottom: 20 }}>
+            <label style={{ fontFamily: "'Inter', system-ui, sans-serif", fontSize: 14, fontWeight: 500, color: '#001f3d', display: 'block', marginBottom: 8 }}>Nomor Telepon</label>
+            <input type="text" value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} placeholder="08xxxxxxxxxx" style={inputStyle(errors.phone)} onFocus={onFocus} onBlur={(e) => onBlur(e, errors.phone)} />
+            {errors.phone && <p style={{ color: '#e74c3c', fontSize: 12, marginTop: 6 }}>{errors.phone}</p>}
+          </div>
+
           {/* Password */}
           <div style={{ marginBottom: 20 }}>
             <label htmlFor="password" style={{ fontFamily: "'Inter', system-ui, sans-serif", fontSize: 14, fontWeight: 500, color: '#001f3d', display: 'block', marginBottom: 8 }}>Password</label>
@@ -137,16 +262,6 @@ export default function RegisterPage() {
               <button type="button" onClick={() => setShowPassword(!showPassword)} style={eyeBtnStyle}>{showPassword ? <Eye size={20} /> : <EyeOff size={20} />}</button>
             </div>
             {errors.password && <p style={{ color: '#e74c3c', fontSize: 12, marginTop: 6, fontFamily: "'Inter', system-ui" }}>{errors.password}</p>}
-          </div>
-
-          {/* Confirm Password */}
-          <div style={{ marginBottom: 20 }}>
-            <label htmlFor="confirmPassword" style={{ fontFamily: "'Inter', system-ui, sans-serif", fontSize: 14, fontWeight: 500, color: '#001f3d', display: 'block', marginBottom: 8 }}>Konfirmasi Password</label>
-            <div style={{ position: 'relative' }}>
-              <input type={showConfirmPassword ? 'text' : 'password'} id="confirmPassword" value={formData.confirmPassword} onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })} placeholder="Ulangi password Anda" style={inputWithIconStyle(errors.confirmPassword)} onFocus={onFocus} onBlur={(e) => onBlur(e, errors.confirmPassword)} />
-              <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} style={eyeBtnStyle}>{showConfirmPassword ? <Eye size={20} /> : <EyeOff size={20} />}</button>
-            </div>
-            {errors.confirmPassword && <p style={{ color: '#e74c3c', fontSize: 12, marginTop: 6, fontFamily: "'Inter', system-ui" }}>{errors.confirmPassword}</p>}
           </div>
 
           {/* Terms */}
@@ -172,7 +287,7 @@ export default function RegisterPage() {
             {isLoading ? (
               <><svg width="18" height="18" viewBox="0 0 24 24" fill="none" style={{ animation: 'spin 1s linear infinite' }}><circle cx="12" cy="12" r="10" stroke="white" strokeWidth="2" strokeOpacity="0.3" /><path d="M12 2a10 10 0 0110 10" stroke="white" strokeWidth="2" strokeLinecap="round" /></svg>Memproses...</>
             ) : (
-              <>Daftar Sekarang<svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M5 12h14M12 5l7 7-7 7" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg></>
+              <>Daftar Sekarang<svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M5 12h14M12 5l7 7-7 7" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg></>
             )}
           </button>
         </form>
@@ -190,43 +305,18 @@ export default function RegisterPage() {
           from { transform: rotate(0deg); }
           to { transform: rotate(360deg); }
         }
-
-        .animate-blob {
-          animation: blob 7s infinite;
-        }
-
-        .animation-delay-2000 {
-          animation-delay: 2s;
-        }
-
-        .animation-delay-4000 {
-          animation-delay: 4s;
-        }
-
+        .animate-blob { animation: blob 7s infinite; }
+        .animation-delay-2000 { animation-delay: 2s; }
+        .animation-delay-4000 { animation-delay: 4s; }
         @keyframes blob {
-          0%, 100% {
-            transform: translate(0px, 0px) scale(1);
-          }
-          33% {
-            transform: translate(20px, -30px) scale(1.08);
-          }
-          66% {
-            transform: translate(-15px, 20px) scale(0.95);
-          }
+          0%, 100% { transform: translate(0px, 0px) scale(1); }
+          33% { transform: translate(20px, -30px) scale(1.08); }
+          66% { transform: translate(-15px, 20px) scale(0.95); }
         }
-
         input[type="password"]::-ms-reveal,
-        input[type="password"]::-ms-clear {
-          display: none;
-        }
-
-        input[type="password"]::-webkit-credentials-auto-fill-button {
-          visibility: hidden;
-          display: none !important;
-          pointer-events: none;
-        }
-      `}
-      </style>
+        input[type="password"]::-ms-clear { display: none; }
+        input[type="password"]::-webkit-credentials-auto-fill-button { visibility: hidden; display: none !important; pointer-events: none; }
+      `}</style>
     </div>
   );
 }

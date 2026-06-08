@@ -7,101 +7,240 @@ import { useRouter } from "next/navigation";
 const API = "http://localhost:5000/api";
 
 export default function SuperadminNotificationsPage() {
+
+  // digunakan untuk navigasi halaman
   const router = useRouter();
+
+  // menyimpan daftar notifikasi
   const [notifications, setNotifications] = useState([]);
+
+  // menyimpan status loading halaman
   const [loading, setLoading] = useState(true);
+
+  // menyimpan status loading saat menandai semua notif dibaca
   const [markingAll, setMarkingAll] = useState(false);
 
+  // ======================================================
+  // initial load
+  // mengambil data notifikasi saat halaman dibuka
+  // ======================================================
   useEffect(() => {
+
     fetchNotifications();
+
   }, []);
 
+  // ======================================================
+  // fetch notifications
+  // mengambil seluruh notifikasi user login
+  // ======================================================
   const fetchNotifications = async () => {
+
     try {
+
+      // mengambil token login
       const token = localStorage.getItem("token");
+
+      // jika belum login arahkan ke login
       if (!token) {
         window.location.href = "/login";
         return;
       }
 
-      const res = await fetch(`${API}/notifications`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      if (!res.ok) {
-        if (res.status === 401) {
-          localStorage.clear();
-          window.location.href = "/login";
+      // request notifikasi ke backend
+      const res = await fetch(
+        `${API}/notifications`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         }
-        throw new Error("Gagal mengambil notifikasi");
+      );
+
+      // jika token tidak valid
+      if (!res.ok) {
+
+        if (res.status === 401) {
+
+          localStorage.clear();
+
+          window.location.href =
+            "/login";
+        }
+
+        throw new Error(
+          "Gagal mengambil notifikasi"
+        );
       }
 
+      // mengubah response menjadi json
       const data = await res.json();
-      setNotifications(Array.isArray(data) ? data : []);
+
+      // menyimpan data notifikasi ke state
+      setNotifications(
+        Array.isArray(data)
+          ? data
+          : []
+      );
+
     } catch (error) {
+
       console.error(error);
+
     } finally {
+
+      // menghentikan loading
       setLoading(false);
     }
   };
 
-  const openNotification = async (notif) => {
+  // ======================================================
+  // open notification
+  // membuka notifikasi dan menandainya sebagai dibaca
+  // ======================================================
+  const openNotification = async (
+    notif
+  ) => {
+
     try {
-      const token = localStorage.getItem("token");
 
+      // mengambil token login
+      const token =
+        localStorage.getItem("token");
+
+      // jika notif belum dibaca
       if (!notif.is_read) {
-        await fetch(`${API}/notifications/${notif.id}/read`, {
-          method: "PUT",
-          headers: { Authorization: `Bearer ${token}` },
-        });
+
+        // update status notif menjadi dibaca
+        await fetch(
+          `${API}/notifications/${notif.id}/read`,
+          {
+            method: "PUT",
+
+            headers: {
+              Authorization:
+                `Bearer ${token}`,
+            },
+          }
+        );
       }
 
+      // jika notif memiliki report id
       if (notif.report_id) {
-        router.push(`/superadmin/reports/${notif.report_id}`);
+
+        // arahkan ke detail laporan
+        router.push(
+          `/superadmin/reports/${notif.report_id}`
+        );
       }
+
     } catch (error) {
+
       console.error(error);
     }
   };
 
+  // ======================================================
+  // mark all read
+  // menandai seluruh notifikasi sebagai dibaca
+  // ======================================================
   const markAllRead = async () => {
+
     try {
+
+      // mengaktifkan loading
       setMarkingAll(true);
-      const token = localStorage.getItem("token");
 
-      const res = await fetch(`${API}/notifications/mark-all-read`, {
-        method: "PUT",
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      // mengambil token login
+      const token =
+        localStorage.getItem("token");
 
-      if (!res.ok) throw new Error("Gagal menandai semua dibaca");
+      // request update seluruh notif
+      const res = await fetch(
+        `${API}/notifications/mark-all-read`,
+        {
+          method: "PUT",
 
+          headers: {
+            Authorization:
+              `Bearer ${token}`,
+          },
+        }
+      );
+
+      // jika gagal
+      if (!res.ok) {
+
+        throw new Error(
+          "Gagal menandai semua dibaca"
+        );
+      }
+
+      // refresh data notifikasi
       fetchNotifications();
+
     } catch (error) {
+
       console.error(error);
+
     } finally {
+
+      // menghentikan loading
       setMarkingAll(false);
     }
   };
 
+  // ======================================================
+  // get notification icon
+  // menentukan icon berdasarkan tipe notifikasi
+  // ======================================================
   const getNotificationIcon = (type) => {
-    if (type?.includes("report")) return <FileText size={18} />;
-    if (type?.includes("user")) return <UserPlus size={18} />;
-    if (type?.includes("admin")) return <Shield size={18} />;
+
+    // notif laporan
+    if (type?.includes("report")) {
+      return <FileText size={18} />;
+    }
+
+    // notif user
+    if (type?.includes("user")) {
+      return <UserPlus size={18} />;
+    }
+
+    // notif admin
+    if (type?.includes("admin")) {
+      return <Shield size={18} />;
+    }
+
+    // notif default
     return <Bell size={18} />;
   };
 
+  // ======================================================
+  // loading state
+  // menampilkan loading saat data notifikasi dimuat
+  // ======================================================
   if (loading) {
     return (
       <div style={styles.loadingWrap}>
         <div style={styles.loadingCard}>
           <div style={styles.spinner}></div>
-          <p style={styles.loadingText}>Memuat notifikasi...</p>
+
+          <p style={styles.loadingText}>
+            memuat notifikasi...
+          </p>
         </div>
-        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+
+        <style>{`
+          @keyframes spin {
+            to {
+              transform: rotate(360deg);
+            }
+          }
+        `}</style>
       </div>
     );
   }
+
 
   return (
     <div style={styles.container}>

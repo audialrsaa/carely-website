@@ -1,13 +1,28 @@
-// app/users/layout.jsx
 "use client";
 
 import SidebarUser from "../components/sidebarUser";
+import { useEffect, useState } from "react";
 
 export default function UsersLayout({ children }) {
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
   return (
     <div style={styles.container}>
       <SidebarUser />
-      <main style={styles.main}>
+      <main style={{
+        ...styles.main,
+        paddingTop: isMobile ? 70 : 0,
+      }}>
         <div style={styles.content}>
           {children}
         </div>

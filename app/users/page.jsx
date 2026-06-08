@@ -409,6 +409,11 @@ const styles = {
   emptyState: {
     padding: "60px 24px",
     textAlign: "center",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 12,
   },
   emptyText: {
     fontSize: 16,

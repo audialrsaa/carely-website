@@ -8,62 +8,158 @@ import { FileText, Loader2, AlertCircle, FileQuestion, ChevronRight, Calendar, U
 const API = "http://localhost:5000/api";
 
 export default function MyReportsPage() {
+
+  // state untuk menyimpan daftar laporan milik user
   const [reports, setReports] = useState([]);
+
+  // state loading saat data sedang diambil
   const [loading, setLoading] = useState(true);
+
+  // state untuk menyimpan pesan error
   const [error, setError] = useState("");
+
+  // state untuk menyimpan id card yang sedang dihover
   const [hoveredId, setHoveredId] = useState(null);
 
+  // mengambil seluruh laporan milik user dari backend
   const fetchReports = async () => {
     try {
+
+      // mengaktifkan loading
       setLoading(true);
+
+      // mengambil token login dari localStorage
       const token = localStorage.getItem("token");
-      
+
+      // jika token tidak ada maka redirect ke login
       if (!token) {
         window.location.href = "/login";
         return;
       }
-      
+
+      // request data laporan milik user
       const res = await fetch(`${API}/reports/my`, {
         method: "GET",
-        headers: { Authorization: `Bearer ${token}` },
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       });
-      
-      if (!res.ok) throw new Error("Gagal mengambil data laporan");
-      
+
+      // jika request gagal
+      if (!res.ok) {
+        throw new Error("Gagal mengambil data laporan");
+      }
+
+      // mengubah response menjadi json
       const data = await res.json();
+
+      // menyimpan data laporan ke state
       setReports(Array.isArray(data) ? data : []);
+
     } catch (err) {
+
+      // menyimpan pesan error
       setError(err.message);
+
     } finally {
+
+      // mematikan loading
       setLoading(false);
+
     }
   };
 
-  useEffect(() => { fetchReports(); }, []);
+  // menjalankan fetchReports saat halaman pertama kali dibuka
+  useEffect(() => {
+    fetchReports();
+  }, []);
 
+  // menentukan warna dan label berdasarkan status laporan
   const getStatusStyle = (status) => {
     const map = {
-      pending: { bg: "#FEF3C7", color: "#D97706", label: "pending" },
-      diproses: { bg: "#DBEAFE", color: "#2563EB", label: "diproses" },
-      diverifikasi: { bg: "#E0E7FF", color: "#4F46E5", label: "diverifikasi" },
-      tindak_lanjut: { bg: "#E0E7FF", color: "#4F46E5", label: "tindak_lanjut" },
-      selesai: { bg: "#D1FAE5", color: "#059669", label: "selesai" },
-      rejected: { bg: "#FEE2E2", color: "#DC2626", label: "rejected" },
-      ditolak: { bg: "#FEE2E2", color: "#DC2626", label: "ditolak" },
+      pending: {
+        bg: "#FEF3C7",
+        color: "#D97706",
+        label: "pending",
+      },
+
+      diproses: {
+        bg: "#DBEAFE",
+        color: "#2563EB",
+        label: "diproses",
+      },
+
+      diverifikasi: {
+        bg: "#E0E7FF",
+        color: "#4F46E5",
+        label: "diverifikasi",
+      },
+
+      tindak_lanjut: {
+        bg: "#E0E7FF",
+        color: "#4F46E5",
+        label: "tindak_lanjut",
+      },
+
+      selesai: {
+        bg: "#D1FAE5",
+        color: "#059669",
+        label: "selesai",
+      },
+
+      rejected: {
+        bg: "#FEE2E2",
+        color: "#DC2626",
+        label: "rejected",
+      },
+
+      ditolak: {
+        bg: "#FEE2E2",
+        color: "#DC2626",
+        label: "ditolak",
+      },
     };
-    return map[status] || { bg: "#F3F4F6", color: "#6B7280", label: status };
+
+    // mengembalikan style sesuai status
+    return map[status] || {
+      bg: "#F3F4F6",
+      color: "#6B7280",
+      label: status,
+    };
   };
 
+  // menentukan warna dan label berdasarkan prioritas laporan
   const getPriorityStyle = (priority) => {
     const map = {
-      emergency: { bg: "#FEE2E2", color: "#DC2626", label: "emergency" },
-      high: { bg: "#FEF3C7", color: "#D97706", label: "high" },
-      medium: { bg: "#DBEAFE", color: "#2563EB", label: "medium" },
-      low: { bg: "#F3F4F6", color: "#6B7280", label: "low" },
+      emergency: {
+        bg: "#FEE2E2",
+        color: "#DC2626",
+        label: "emergency",
+      },
+
+      high: {
+        bg: "#FEF3C7",
+        color: "#D97706",
+        label: "high",
+      },
+
+      medium: {
+        bg: "#DBEAFE",
+        color: "#2563EB",
+        label: "medium",
+      },
+
+      low: {
+        bg: "#F3F4F6",
+        color: "#6B7280",
+        label: "low",
+      },
     };
+
+    // mengembalikan style prioritas
     return map[priority] || map.low;
   };
-
+  
   return (
     <div style={styles.container}>
       {/* Header */}

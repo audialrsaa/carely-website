@@ -10,92 +10,273 @@ import { Search, Eye, FileText, Loader2, TrendingUp, Clock, CheckCircle, AlertCi
 
 const API = "http://localhost:5000/api";
 
+// ======================================================
+// superadmin reports page
+// halaman untuk melihat seluruh laporan yang masuk
+// serta melakukan pencarian dan filtering laporan
+// ======================================================
 export default function SuperAdminReportsPage() {
+
+  // menyimpan seluruh data laporan
   const [reports, setReports] = useState([]);
+
+  // menyimpan keyword pencarian
   const [search, setSearch] = useState("");
+
+  // menyimpan status loading halaman
   const [loading, setLoading] = useState(true);
+
+  // menyimpan filter status yang dipilih
   const [filterStatus, setFilterStatus] = useState("all");
 
+  // ======================================================
+  // initial load
+  // mengambil seluruh data laporan saat halaman dibuka
+  // ======================================================
   useEffect(() => {
+
     const fetchReports = async () => {
+
       try {
+
+        // mengambil token login
         const token = localStorage.getItem("token");
 
+        // jika token tidak ada arahkan ke login
         if (!token) {
           window.location.href = "/login";
           return;
         }
 
-        const res = await fetch(`${API}/reports`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
+        // request data laporan ke backend
+        const res = await fetch(
+          `${API}/reports`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
 
+        // jika request gagal
         if (!res.ok) {
+
           const text = await res.text();
-          console.error("Fetch Reports Error:", text);
+
+          console.error(
+            "Fetch Reports Error:",
+            text
+          );
+
           return;
         }
 
+        // mengubah response menjadi json
         const data = await res.json();
-        setReports(Array.isArray(data) ? data : []);
+
+        // menyimpan data laporan ke state
+        setReports(
+          Array.isArray(data)
+            ? data
+            : []
+        );
+
       } catch (err) {
-        console.error("Fetch Reports Error:", err);
+
+        console.error(
+          "Fetch Reports Error:",
+          err
+        );
+
       } finally {
+
+        // menghentikan loading
         setLoading(false);
       }
     };
 
     fetchReports();
+
   }, []);
 
+  // ======================================================
+  // get status count
+  // menghitung jumlah laporan berdasarkan status
+  // ======================================================
   const getStatusCount = (status) => {
-    if (status === "all") return reports.length;
-    return reports.filter(r => r.status === status).length;
+
+    // jika semua status dipilih
+    if (status === "all") {
+      return reports.length;
+    }
+
+    // menghitung jumlah laporan sesuai status
+    return reports.filter(
+      (r) => r.status === status
+    ).length;
   };
 
-  const filteredReports = reports.filter((report) => {
-    const matchesSearch = report.title?.toLowerCase().includes(search.toLowerCase()) ||
-      (report.reporter_name || "").toLowerCase().includes(search.toLowerCase());
-    const matchesStatus = filterStatus === "all" || report.status === filterStatus;
-    return matchesSearch && matchesStatus;
-  });
+  // ======================================================
+  // filtered reports
+  // melakukan pencarian dan filter laporan
+  // ======================================================
+  const filteredReports = reports.filter(
+    (report) => {
 
+      // filter berdasarkan judul laporan atau nama pelapor
+      const matchesSearch =
+        report.title
+          ?.toLowerCase()
+          .includes(search.toLowerCase()) ||
+
+        (report.reporter_name || "")
+          .toLowerCase()
+          .includes(search.toLowerCase());
+
+      // filter berdasarkan status laporan
+      const matchesStatus =
+        filterStatus === "all" ||
+        report.status === filterStatus;
+
+      // hanya tampilkan data yang sesuai filter
+      return (
+        matchesSearch &&
+        matchesStatus
+      );
+    }
+  );
+
+  // ======================================================
+  // get status style
+  // menentukan warna, label, dan icon status laporan
+  // ======================================================
   const getStatusStyle = (status) => {
+
     const map = {
-      pending: { bg: "#FEF3C7", color: "#D97706", label: "Menunggu", icon: Clock },
-      diperiksa: { bg: "#DBEAFE", color: "#2563EB", label: "Diperiksa", icon: AlertCircle },
-      diverifikasi: { bg: "#DBEAFE", color: "#2563EB", label: "Diverifikasi", icon: CheckCircle },
-      tindak_lanjut: { bg: "#E0E7FF", color: "#4F46E5", label: "Tindak Lanjut", icon: TrendingUp },
-      selesai: { bg: "#D1FAE5", color: "#059669", label: "Selesai", icon: CheckCircle },
-      rejected: { bg: "#FEE2E2", color: "#DC2626", label: "Ditolak", icon: AlertCircle },
+
+      pending: {
+        bg: "#FEF3C7",
+        color: "#D97706",
+        label: "Menunggu",
+        icon: Clock,
+      },
+
+      diperiksa: {
+        bg: "#DBEAFE",
+        color: "#2563EB",
+        label: "Diperiksa",
+        icon: AlertCircle,
+      },
+
+      diverifikasi: {
+        bg: "#DBEAFE",
+        color: "#2563EB",
+        label: "Diverifikasi",
+        icon: CheckCircle,
+      },
+
+      tindak_lanjut: {
+        bg: "#E0E7FF",
+        color: "#4F46E5",
+        label: "Tindak Lanjut",
+        icon: TrendingUp,
+      },
+
+      selesai: {
+        bg: "#D1FAE5",
+        color: "#059669",
+        label: "Selesai",
+        icon: CheckCircle,
+      },
+
+      rejected: {
+        bg: "#FEE2E2",
+        color: "#DC2626",
+        label: "Ditolak",
+        icon: AlertCircle,
+      },
     };
-    return map[status] || { bg: "#F3F4F6", color: "#6B7280", label: status, icon: FileText };
+
+    // mengembalikan style sesuai status
+    return (
+      map[status] || {
+        bg: "#F3F4F6",
+        color: "#6B7280",
+        label: status,
+        icon: FileText,
+      }
+    );
   };
 
+  // ======================================================
+  // get priority style
+  // menentukan warna dan label prioritas laporan
+  // ======================================================
   const getPriorityStyle = (priority) => {
+
     const map = {
-      emergency: { bg: "#FEE2E2", color: "#DC2626", label: "Emergency", borderColor: "#FCA5A5" },
-      high: { bg: "#FEF3C7", color: "#D97706", label: "High", borderColor: "#FCD34D" },
-      medium: { bg: "#DBEAFE", color: "#2563EB", label: "Medium", borderColor: "#93C5FD" },
-      low: { bg: "#F3F4F6", color: "#6B7280", label: "Low", borderColor: "#D1D5DB" },
+
+      emergency: {
+        bg: "#FEE2E2",
+        color: "#DC2626",
+        label: "Emergency",
+        borderColor: "#FCA5A5",
+      },
+
+      high: {
+        bg: "#FEF3C7",
+        color: "#D97706",
+        label: "High",
+        borderColor: "#FCD34D",
+      },
+
+      medium: {
+        bg: "#DBEAFE",
+        color: "#2563EB",
+        label: "Medium",
+        borderColor: "#93C5FD",
+      },
+
+      low: {
+        bg: "#F3F4F6",
+        color: "#6B7280",
+        label: "Low",
+        borderColor: "#D1D5DB",
+      },
     };
+
+    // mengembalikan style prioritas
     return map[priority] || map.low;
   };
 
+  // ======================================================
+  // loading state
+  // menampilkan loading saat data laporan dimuat
+  // ======================================================
   if (loading) {
     return (
       <div style={styles.loadingWrap}>
         <div style={styles.loadingCard}>
-          <Loader2 size={48} style={styles.spinner} />
-          <p style={styles.loadingText}>Memuat data laporan...</p>
+
+          <Loader2
+            size={48}
+            style={styles.spinner}
+          />
+
+          <p style={styles.loadingText}>
+            Memuat data laporan...
+          </p>
+
         </div>
+
         <style>{`
           @keyframes spin {
-            to { transform: rotate(360deg); }
+            to {
+              transform: rotate(360deg);
+            }
           }
         `}</style>
+
       </div>
     );
   }

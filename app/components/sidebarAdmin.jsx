@@ -8,7 +8,9 @@ import {
   FileText,
   LogOut,
   User,
-  Bell
+  Bell,
+  Menu,
+  X
 } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useState } from "react";
@@ -19,6 +21,8 @@ export default function SidebarAdmin() {
   const pathname = usePathname();
   const router = useRouter();
   const [unreadCount, setUnreadCount] = useState(0);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
   const menuItems = [
     { label: "Dashboard", href: "/admin", icon: LayoutDashboard },
@@ -51,14 +55,31 @@ export default function SidebarAdmin() {
     return () => clearInterval(interval);
   }, []);
 
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+      if (window.innerWidth >= 768) {
+        setIsMobileMenuOpen(false);
+      }
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
   const handleLogout = () => {
     localStorage.clear();
     sessionStorage.clear();
     router.push("/login");
   };
 
-  return (
-    <aside style={styles.sidebar}>
+  const closeMenu = () => {
+    setIsMobileMenuOpen(false);
+  };
+
+  const SidebarContent = () => (
+    <>
       {/* Logo Section */}
       <div style={styles.logoSection}>
         <div style={styles.logoContainer}>
@@ -76,6 +97,11 @@ export default function SidebarAdmin() {
             <p style={styles.logoSubtitle}>Admin Panel</p>
           </div>
         </div>
+        {isMobile && (
+          <button onClick={closeMenu} style={styles.closeBtn}>
+            <X size={20} />
+          </button>
+        )}
       </div>
 
       {/* Navigation Menu */}
@@ -85,7 +111,7 @@ export default function SidebarAdmin() {
           const Icon = item.icon;
 
           return (
-            <Link key={item.href} href={item.href} style={styles.navLink}>
+            <Link key={item.href} href={item.href} onClick={closeMenu} style={styles.navLink}>
               <div
                 style={{
                   ...styles.navItem,
@@ -134,7 +160,47 @@ export default function SidebarAdmin() {
           Keluar
         </button>
       </div>
-    </aside>
+    </>
+  );
+
+  // Sidebar style yang dinamis untuk mobile
+  const sidebarStyle = {
+    ...styles.sidebar,
+    ...(isMobile && {
+      position: 'fixed',
+      left: 0,
+      top: 0,
+      transform: isMobileMenuOpen ? 'translateX(0)' : 'translateX(-100%)',
+      transition: 'transform 0.3s ease',
+      zIndex: 1000,
+    })
+  };
+
+  return (
+    <>
+      {/* Mobile Menu Button */}
+      {isMobile && (
+        <button
+          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          style={styles.menuButton}
+        >
+          <Menu size={24} />
+        </button>
+      )}
+
+      {/* Overlay untuk mobile */}
+      {isMobile && isMobileMenuOpen && (
+        <div
+          style={styles.overlay}
+          onClick={closeMenu}
+        />
+      )}
+
+      {/* Sidebar */}
+      <aside style={sidebarStyle}>
+        <SidebarContent />
+      </aside>
+    </>
   );
 }
 
@@ -142,8 +208,6 @@ const styles = {
   sidebar: {
     width: 260,
     height: '100vh',
-    position: 'sticky',
-    top: 0,
     background: '#fff',
     borderRight: '1px solid #E5E7EB',
     display: 'flex',
@@ -154,6 +218,9 @@ const styles = {
   logoSection: {
     padding: '24px 20px',
     borderBottom: '1px solid #E5E7EB',
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   logoContainer: {
     display: 'flex',
@@ -164,7 +231,7 @@ const styles = {
     width: 40,
     height: 40,
     borderRadius: 10,
-    background: 'linear-gradient(135deg, #004b8d, #43acff)',
+    background: '#fff',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -183,6 +250,17 @@ const styles = {
     fontSize: 10,
     color: '#6B7280',
     margin: 0,
+  },
+  closeBtn: {
+    background: 'transparent',
+    border: 'none',
+    cursor: 'pointer',
+    color: '#6B7280',
+    padding: 8,
+    borderRadius: 8,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   nav: {
     flex: 1,
@@ -242,5 +320,29 @@ const styles = {
     fontWeight: 600,
     color: '#DC2626',
     transition: 'all 0.2s',
+  },
+  menuButton: {
+    position: 'fixed',
+    top: 16,
+    left: 16,
+    zIndex: 1001,
+    background: '#fff',
+    border: '1px solid #E5E7EB',
+    borderRadius: 10,
+    padding: 10,
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+  },
+  overlay: {
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    background: 'rgba(0,0,0,0.5)',
+    zIndex: 999,
   },
 };

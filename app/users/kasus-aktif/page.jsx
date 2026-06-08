@@ -1,6 +1,3 @@
-// ============================================================
-// app/users/active-cases/page.jsx — ActiveCasesPage
-// ============================================================
 "use client";
 
 import { useEffect, useState } from "react";
@@ -16,85 +13,199 @@ export default function ActiveCasesPage() {
   const [loading, setLoading] = useState(true);
   const [hoveredId, setHoveredId] = useState(null);
 
+  // helper fetch dengan token dan handling error
   const apiFetch = async (endpoint, options = {}) => {
     const token = localStorage.getItem("token");
-    const res = await fetch(`${API}${endpoint}`, { 
-      ...options, 
-      headers: { 
-        "Content-Type": "application/json", 
-        Authorization: `Bearer ${token}`, 
-        ...(options.headers || {}) 
-      } 
+
+    const res = await fetch(`${API}${endpoint}`, {
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+        ...(options.headers || {}),
+      },
     });
+
     if (!res.ok) {
       const errBody = await res.json().catch(() => ({}));
-      if (res.status === 401 || res.status === 403) { 
-        localStorage.removeItem("token"); 
-        localStorage.removeItem("user"); 
-        window.location.href = "/login"; 
+
+      // redirect ke login jika token tidak valid
+      if (res.status === 401 || res.status === 403) {
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        window.location.href = "/login";
       }
+
       throw new Error(errBody.message || "Request gagal");
     }
+
     return res.json();
   };
 
+  // mengambil data kasus aktif milik user
   useEffect(() => {
     const fetchReports = async () => {
       try {
         const data = await apiFetch("/reports/my");
-        const activeCases = data.filter((r) => r.status !== "selesai" && r.status !== "rejected" && r.status !== "ditolak");
+
+        // hanya menampilkan laporan yang belum selesai atau ditolak
+        const activeCases = data.filter(
+          (r) =>
+            r.status !== "selesai" &&
+            r.status !== "rejected" &&
+            r.status !== "ditolak"
+        );
+
         setReports(activeCases);
         setFilteredReports(activeCases);
-      } catch (err) { 
-        console.error(err); 
-      } finally { 
-        setLoading(false); 
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
       }
     };
+
     fetchReports();
   }, []);
 
+  // filter laporan berdasarkan kata kunci pencarian
   useEffect(() => {
-    const filtered = reports.filter((r) =>
-      r.title?.toLowerCase().includes(search.toLowerCase()) ||
-      r.category_name?.toLowerCase().includes(search.toLowerCase()) ||
-      r.incident_location?.toLowerCase().includes(search.toLowerCase())
+    const filtered = reports.filter(
+      (r) =>
+        r.title?.toLowerCase().includes(search.toLowerCase()) ||
+        r.category_name?.toLowerCase().includes(search.toLowerCase()) ||
+        r.incident_location?.toLowerCase().includes(search.toLowerCase())
     );
+
     setFilteredReports(filtered);
   }, [search, reports]);
 
+  // menentukan tampilan badge prioritas
   const getPriorityStyle = (priority) => {
     switch (priority) {
       case "emergency":
-        return { background: "#FEE2E2", color: "#DC2626", label: "emergency" };
+        return {
+          background: "#FEE2E2",
+          color: "#DC2626",
+          label: "emergency",
+        };
+
       case "high":
-        return { background: "#FEF3C7", color: "#D97706", label: "high" };
+        return {
+          background: "#FEF3C7",
+          color: "#D97706",
+          label: "high",
+        };
+
       case "medium":
-        return { background: "#DBEAFE", color: "#2563EB", label: "medium" };
+        return {
+          background: "#DBEAFE",
+          color: "#2563EB",
+          label: "medium",
+        };
+
       case "low":
       default:
-        return { background: "#F3F4F6", color: "#6B7280", label: "low" };
+        return {
+          background: "#F3F4F6",
+          color: "#6B7280",
+          label: "low",
+        };
     }
   };
 
+  // menentukan tampilan badge status
   const getStatusStyle = (status) => {
     switch (status) {
-      case "pending": return { background: "#FEF3C7", color: "#D97706", label: "pending" };
-      case "diproses": return { background: "#DBEAFE", color: "#2563EB", label: "diproses" };
-      case "investigasi": return { background: "#E0E7FF", color: "#4F46E5", label: "investigasi" };
-      case "ditindak": return { background: "#E0E7FF", color: "#4F46E5", label: "ditindak" };
-      case "diverifikasi": return { background: "#E0E7FF", color: "#4F46E5", label: "diverifikasi" };
-      case "tindak_lanjut": return { background: "#E0E7FF", color: "#4F46E5", label: "tindak_lanjut" };
-      case "selesai": return { background: "#D1FAE5", color: "#059669", label: "selesai" };
-      case "rejected": return { background: "#FEE2E2", color: "#DC2626", label: "rejected" };
-      case "ditolak": return { background: "#FEE2E2", color: "#DC2626", label: "ditolak" };
-      default: return { background: "#F3F4F6", color: "#6B7280", label: status };
+      case "pending":
+        return {
+          background: "#FEF3C7",
+          color: "#D97706",
+          label: "pending",
+        };
+
+      case "diproses":
+        return {
+          background: "#DBEAFE",
+          color: "#2563EB",
+          label: "diproses",
+        };
+
+      case "investigasi":
+        return {
+          background: "#E0E7FF",
+          color: "#4F46E5",
+          label: "investigasi",
+        };
+
+      case "ditindak":
+        return {
+          background: "#E0E7FF",
+          color: "#4F46E5",
+          label: "ditindak",
+        };
+
+      case "diverifikasi":
+        return {
+          background: "#E0E7FF",
+          color: "#4F46E5",
+          label: "diverifikasi",
+        };
+
+      case "tindak_lanjut":
+        return {
+          background: "#E0E7FF",
+          color: "#4F46E5",
+          label: "tindak_lanjut",
+        };
+
+      case "selesai":
+        return {
+          background: "#D1FAE5",
+          color: "#059669",
+          label: "selesai",
+        };
+
+      case "rejected":
+        return {
+          background: "#FEE2E2",
+          color: "#DC2626",
+          label: "rejected",
+        };
+
+      case "ditolak":
+        return {
+          background: "#FEE2E2",
+          color: "#DC2626",
+          label: "ditolak",
+        };
+
+      default:
+        return {
+          background: "#F3F4F6",
+          color: "#6B7280",
+          label: status,
+        };
     }
   };
 
-  const pendingCount = reports.filter(r => r.status === 'pending').length;
-  const processCount = reports.filter(r => ['diproses', 'investigasi', 'ditindak', 'diverifikasi', 'tindak_lanjut'].includes(r.status)).length;
+  // menghitung jumlah laporan pending
+  const pendingCount = reports.filter(
+    (r) => r.status === "pending"
+  ).length;
 
+  // menghitung jumlah laporan yang sedang diproses
+  const processCount = reports.filter((r) =>
+    [
+      "diproses",
+      "investigasi",
+      "ditindak",
+      "diverifikasi",
+      "tindak_lanjut",
+    ].includes(r.status)
+  ).length;
+
+  // menampilkan loading saat data masih diambil
   if (loading) {
     return (
       <div style={styles.loadingWrap}>
@@ -102,7 +213,10 @@ export default function ActiveCasesPage() {
           <div style={styles.spinner}></div>
           <p style={styles.loadingText}>Memuat kasus aktif...</p>
         </div>
-        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+
+        <style>
+          {`@keyframes spin { to { transform: rotate(360deg); } }`}
+        </style>
       </div>
     );
   }

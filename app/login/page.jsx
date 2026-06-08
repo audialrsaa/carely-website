@@ -9,86 +9,219 @@ import { Eye, EyeOff } from 'lucide-react';
 export default function LoginPage() {
   const router = useRouter();
 
+  // menyimpan data form login
   const [formData, setFormData] = useState({
     email: "",
     password: "",
     rememberMe: false,
   });
 
+  // menyimpan pesan error validasi form
   const [errors, setErrors] = useState({});
+
+  // menyimpan status loading
   const [loading, setLoading] = useState(false);
+
+  // menyimpan pesan error dari server
   const [serverError, setServerError] = useState("");
+
+  // menyimpan status tampil/sembunyi password
   const [showPassword, setShowPassword] = useState(false);
+
+  // menyimpan status loading saat proses login
   const [isLoading, setIsLoading] = useState(false);
 
+  // ======================================================
+  // handle change
+  // memperbarui nilai input form saat user mengetik
+  // ======================================================
   const handleChange = (e) => {
+
+    // mengambil data dari input
     const { name, value, type, checked } = e.target;
+
+    // memperbarui state form
     setFormData({
       ...formData,
-      [name]: type === "checkbox" ? checked : value,
+      [name]:
+        type === "checkbox"
+          ? checked
+          : value,
     });
   };
 
+  // ======================================================
+  // validate form
+  // memvalidasi data login sebelum dikirim
+  // ======================================================
   const validateForm = () => {
+
     let newErrors = {};
 
+    // validasi email kosong
     if (!formData.email.trim()) {
-      newErrors.email = "Email harus diisi";
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = "Email tidak valid";
+
+      newErrors.email =
+        "Email harus diisi";
+
     }
 
+    // validasi format email
+    else if (
+      !/\S+@\S+\.\S+/.test(
+        formData.email
+      )
+    ) {
+
+      newErrors.email =
+        "Email tidak valid";
+    }
+
+    // validasi password kosong
     if (!formData.password.trim()) {
-      newErrors.password = "Password harus diisi";
-    } else if (formData.password.length < 6) {
-      newErrors.password = "Password minimal 6 karakter";
+
+      newErrors.password =
+        "Password harus diisi";
+
     }
 
+    // validasi panjang password
+    else if (
+      formData.password.length < 6
+    ) {
+
+      newErrors.password =
+        "Password minimal 6 karakter";
+    }
+
+    // menyimpan error validasi
     setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+
+    // mengembalikan status validasi
+    return (
+      Object.keys(newErrors).length === 0
+    );
   };
 
+  // ======================================================
+  // handle submit
+  // memproses login pengguna
+  // ======================================================
   const handleSubmit = async (e) => {
+
+    // mencegah reload halaman
     e.preventDefault();
+
+    // menghapus error sebelumnya
     setServerError("");
 
+    // menghentikan proses jika validasi gagal
     if (!validateForm()) return;
 
+    // mengaktifkan loading
     setIsLoading(true);
 
     try {
-      const response = await fetch("http://localhost:5000/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: formData.email, password: formData.password }),
-      });
 
-      const data = await response.json();
+      // mengirim data login ke backend
+      const response = await fetch(
+        "http://localhost:5000/api/auth/login",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type":
+              "application/json",
+          },
+          body: JSON.stringify({
+            email: formData.email,
+            password: formData.password,
+          }),
+        }
+      );
 
-      if (!response.ok) throw new Error(data.message || "Login gagal");
+      // mengubah response menjadi json
+      const data =
+        await response.json();
 
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("user", JSON.stringify(data.user));
-      sessionStorage.setItem("token", data.token);
-      sessionStorage.setItem("user", JSON.stringify(data.user));
+      // jika login gagal tampilkan pesan error
+      if (!response.ok) {
+        throw new Error(
+          data.message ||
+          "Login gagal"
+        );
+      }
 
+      // menyimpan token login ke local storage
+      localStorage.setItem(
+        "token",
+        data.token
+      );
+
+      // menyimpan data user ke local storage
+      localStorage.setItem(
+        "user",
+        JSON.stringify(data.user)
+      );
+
+      // menyimpan token ke session storage
+      sessionStorage.setItem(
+        "token",
+        data.token
+      );
+
+      // menyimpan data user ke session storage
+      sessionStorage.setItem(
+        "user",
+        JSON.stringify(data.user)
+      );
+
+      // menyimpan email jika remember me dicentang
       if (formData.rememberMe) {
-        localStorage.setItem("rememberedEmail", formData.email);
+
+        localStorage.setItem(
+          "rememberedEmail",
+          formData.email
+        );
+
       } else {
-        localStorage.removeItem("rememberedEmail");
+
+        // menghapus email tersimpan
+        localStorage.removeItem(
+          "rememberedEmail"
+        );
       }
 
+      // mengarahkan user berdasarkan role
       switch (data.user.role) {
-        case "superadmin": router.push("/superadmin"); break;
-        case "admin": router.push("/admin"); break;
-        default: router.push("/users"); break;
+
+        case "superadmin":
+          router.push("/superadmin");
+          break;
+
+        case "admin":
+          router.push("/admin");
+          break;
+
+        default:
+          router.push("/users");
+          break;
       }
+
     } catch (error) {
-      setServerError(error.message || "Terjadi kesalahan koneksi");
+
+      // menyimpan pesan error dari server
+      setServerError(
+        error.message ||
+        "Terjadi kesalahan koneksi"
+      );
+
     } finally {
+
+      // menghentikan loading
       setIsLoading(false);
     }
   };
+
 
   return (
     <div

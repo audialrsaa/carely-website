@@ -21,7 +21,11 @@ import {
 const API = "http://localhost:5000/api";
 
 export default function SuperAdminDashboardPage() {
+
+  // state loading untuk menampilkan spinner saat data dashboard masih diambil
   const [loading, setLoading] = useState(true);
+
+  // state untuk menyimpan seluruh statistik dashboard
   const [stats, setStats] = useState({
     totalUsers: 0,
     totalAdmins: 0,
@@ -31,21 +35,32 @@ export default function SuperAdminDashboardPage() {
     processReports: 0,
     selesaiReports: 0,
   });
+
+  // state untuk menyimpan laporan terbaru
   const [recentReports, setRecentReports] = useState([]);
 
+  // dijalankan saat halaman pertama kali dibuka
   useEffect(() => {
+
+    // mengambil data dashboard dari backend
     const fetchDashboard = async () => {
       try {
+
+        // mengambil token login
         const token = localStorage.getItem("token");
+
+        // jika token tidak ada maka kembali ke login
         if (!token) {
           window.location.href = "/login";
           return;
         }
 
+        // mengambil data statistik dashboard superadmin
         const dashboardRes = await fetch(`${API}/admin/dashboard/super`, {
           headers: { Authorization: `Bearer ${token}` },
         });
 
+        // jika token tidak valid atau akses ditolak
         if (dashboardRes.status === 401 || dashboardRes.status === 403) {
           localStorage.clear();
           sessionStorage.clear();
@@ -53,28 +68,48 @@ export default function SuperAdminDashboardPage() {
           return;
         }
 
+        // jika request dashboard gagal
         if (!dashboardRes.ok) {
           throw new Error(`Dashboard Error`);
         }
 
+        // mengubah response dashboard menjadi json
         const dashboardData = await dashboardRes.json();
 
+        // mengambil seluruh data laporan
         const reportsRes = await fetch(`${API}/reports`, {
           headers: { Authorization: `Bearer ${token}` },
         });
 
+        // jika request laporan gagal
         if (!reportsRes.ok) {
           throw new Error(`Reports Error`);
         }
 
+        // mengubah response laporan menjadi json
         const reportsData = await reportsRes.json();
 
-        const pendingReports = dashboardData.status_summary?.find((s) => s.status === "pending")?.total || 0;
-        const selesaiReports = dashboardData.status_summary?.find((s) => s.status === "selesai")?.total || 0;
-        const processReports = dashboardData.status_summary
-          ?.filter((s) => ["diproses", "investigasi", "ditindak"].includes(s.status))
-          .reduce((acc, curr) => acc + curr.total, 0) || 0;
+        // menghitung jumlah laporan status pending
+        const pendingReports =
+          dashboardData.status_summary?.find(
+            (s) => s.status === "pending"
+          )?.total || 0;
 
+        // menghitung jumlah laporan status selesai
+        const selesaiReports =
+          dashboardData.status_summary?.find(
+            (s) => s.status === "selesai"
+          )?.total || 0;
+
+        // menghitung jumlah laporan yang sedang diproses
+        const processReports =
+          dashboardData.status_summary
+            ?.filter((s) =>
+              ["diproses", "investigasi", "ditindak"].includes(s.status)
+            )
+            .reduce((acc, curr) => acc + curr.total, 0) || 0;
+
+        // menyimpan seluruh statistik dashboard ke state
         setStats({
           totalUsers: dashboardData.total_users || 0,
           totalAdmins: dashboardData.total_admins || 0,
@@ -85,24 +120,48 @@ export default function SuperAdminDashboardPage() {
           selesaiReports,
         });
 
-        setRecentReports(Array.isArray(reportsData) ? reportsData.slice(0, 6) : []);
+        // mengambil 6 laporan terbaru untuk ditampilkan di dashboard
+        setRecentReports(
+          Array.isArray(reportsData)
+            ? reportsData.slice(0, 6)
+            : []
+        );
+
       } catch (error) {
+
+        // menampilkan error jika fetch gagal
         console.error("Dashboard Superadmin Error:", error);
+
       } finally {
+
+        // menghentikan loading setelah proses selesai
         setLoading(false);
+
       }
     };
 
+    // menjalankan fungsi fetch dashboard
     fetchDashboard();
+
   }, []);
 
+  // menampilkan spinner saat data masih dimuat
   if (loading) {
     return (
       <div style={styles.loadingWrap}>
         <div style={styles.loadingCard}>
+
+          {/* animasi loading */}
           <div style={styles.spinner}></div>
-          <p style={styles.loadingText}>Memuat dashboard...</p>
+
+          {/* teks loading */}
+          <p style={styles.loadingText}>
+            Memuat dashboard...
+          </p>
+
         </div>
+
+        {/* animasi spinner berputar */}
         <style>{`
           @keyframes spin {
             to { transform: rotate(360deg); }
@@ -112,41 +171,73 @@ export default function SuperAdminDashboardPage() {
     );
   }
 
+  // menentukan warna dan label berdasarkan status laporan
   const getStatusStyle = (status) => {
     const map = {
-      pending: { bg: "#FEF3C7", color: "#D97706", label: "Menunggu" },
-      diproses: { bg: "#DBEAFE", color: "#2563EB", label: "Diproses" },
-      investigasi: { bg: "#E0E7FF", color: "#4F46E5", label: "Investigasi" },
-      ditindak: { bg: "#E0E7FF", color: "#4F46E5", label: "Ditindak" },
-      selesai: { bg: "#D1FAE5", color: "#059669", label: "Selesai" },
+      pending: {
+        bg: "#FEF3C7",
+        color: "#D97706",
+        label: "Menunggu",
+      },
+      diproses: {
+        bg: "#DBEAFE",
+        color: "#2563EB",
+        label: "Diproses",
+      },
+      investigasi: {
+        bg: "#E0E7FF",
+        color: "#4F46E5",
+        label: "Investigasi",
+      },
+      ditindak: {
+        bg: "#E0E7FF",
+        color: "#4F46E5",
+        label: "Ditindak",
+      },
+      selesai: {
+        bg: "#D1FAE5",
+        color: "#059669",
+        label: "Selesai",
+      },
     };
-    return map[status] || { bg: "#F3F4F6", color: "#6B7280", label: status };
+
+    return map[status] || {
+      bg: "#F3F4F6",
+      color: "#6B7280",
+      label: status,
+    };
   };
 
+  // data card statistik yang akan ditampilkan di dashboard
   const statCards = [
-    { 
-      label: "Total User", 
-      value: stats.totalUsers, 
-      icon: <Users size={20} />, 
-      bg: "#EFF6FF", 
+    {
+      // jumlah seluruh user
+      label: "Total User",
+      value: stats.totalUsers,
+      icon: <Users size={20} />,
+      bg: "#EFF6FF",
       color: "#2563EB",
-      link: "/superadmin/users"
+      link: "/superadmin/users",
     },
-    { 
-      label: "Total Admin", 
-      value: stats.totalAdmins, 
-      icon: <Shield size={20} />, 
-      bg: "#F3E8FF", 
+
+    {
+      // jumlah seluruh admin
+      label: "Total Admin",
+      value: stats.totalAdmins,
+      icon: <Shield size={20} />,
+      bg: "#F3E8FF",
       color: "#9333EA",
-      link: "/superadmin/admins"
+      link: "/superadmin/admins",
     },
-    { 
-      label: "Total Laporan", 
-      value: stats.totalReports, 
-      icon: <FileText size={20} />, 
-      bg: "#FEF3C7", 
+
+    {
+      // jumlah seluruh laporan
+      label: "Total Laporan",
+      value: stats.totalReports,
+      icon: <FileText size={20} />,
+      bg: "#FEF3C7",
       color: "#D97706",
-      link: "/superadmin/reports"
+      link: "/superadmin/reports",
     },
   ];
 

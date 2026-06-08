@@ -11,7 +11,9 @@ import {
   FileText, 
   ClipboardList, 
   LogOut,
-  Bell
+  Bell,
+  Menu,
+  X
 } from "lucide-react";
 import Image from "next/image";
 
@@ -21,6 +23,8 @@ export default function SidebarSuperAdmin() {
   const pathname = usePathname();
   const router = useRouter();
   const [unreadCount, setUnreadCount] = useState(0);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
   const fetchUnreadCount = async () => {
     try {
@@ -48,6 +52,19 @@ export default function SidebarSuperAdmin() {
     return () => clearInterval(interval);
   }, []);
 
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+      if (window.innerWidth >= 768) {
+        setIsMobileMenuOpen(false);
+      }
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
   const menuItems = [
     { label: "Dashboard", href: "/superadmin", icon: LayoutDashboard },
     { label: "Notifikasi", href: "/superadmin/notifications", icon: Bell, hasBadge: true },
@@ -65,8 +82,12 @@ export default function SidebarSuperAdmin() {
     router.push("/login");
   };
 
-  return (
-    <aside style={styles.sidebar}>
+  const closeMenu = () => {
+    setIsMobileMenuOpen(false);
+  };
+
+  const SidebarContent = () => (
+    <>
       {/* Logo Section */}
       <div style={styles.logoSection}>
         <div style={styles.logoContainer}>
@@ -84,6 +105,11 @@ export default function SidebarSuperAdmin() {
             <p style={styles.logoSubtitle}>Superadmin Panel</p>
           </div>
         </div>
+        {isMobile && (
+          <button onClick={closeMenu} style={styles.closeBtn}>
+            <X size={20} />
+          </button>
+        )}
       </div>
 
       {/* Navigation Menu */}
@@ -93,7 +119,7 @@ export default function SidebarSuperAdmin() {
           const Icon = item.icon;
           
           return (
-            <Link key={item.href} href={item.href} style={styles.navLink}>
+            <Link key={item.href} href={item.href} onClick={closeMenu} style={styles.navLink}>
               <div
                 style={{
                   ...styles.navItem,
@@ -143,25 +169,67 @@ export default function SidebarSuperAdmin() {
           Keluar
         </button>
       </div>
-    </aside>
+    </>
+  );
+
+  // Sidebar style yang dinamis untuk mobile
+  const sidebarStyle = {
+    ...styles.sidebar,
+    ...(isMobile && {
+      position: 'fixed',
+      left: 0,
+      top: 0,
+      transform: isMobileMenuOpen ? 'translateX(0)' : 'translateX(-100%)',
+      transition: 'transform 0.3s ease',
+      zIndex: 1000,
+      height: '100vh',
+    })
+  };
+
+  return (
+    <>
+      {/* Mobile Menu Button */}
+      {isMobile && (
+        <button
+          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          style={styles.menuButton}
+        >
+          <Menu size={24} />
+        </button>
+      )}
+
+      {/* Overlay untuk mobile */}
+      {isMobile && isMobileMenuOpen && (
+        <div
+          style={styles.overlay}
+          onClick={closeMenu}
+        />
+      )}
+
+      {/* Sidebar */}
+      <aside style={sidebarStyle}>
+        <SidebarContent />
+      </aside>
+    </>
   );
 }
 
 const styles = {
   sidebar: {
     width: 260,
-    minHeight: '100vh',
     background: '#fff',
     borderRight: '1px solid #E5E7EB',
     display: 'flex',
     flexDirection: 'column',
     flexShrink: 0,
-    position: 'sticky',
-    top: 0,
+    overflowY: 'auto',
   },
   logoSection: {
     padding: '24px 20px',
     borderBottom: '1px solid #E5E7EB',
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   logoContainer: {
     display: 'flex',
@@ -191,6 +259,17 @@ const styles = {
     fontSize: 10,
     color: '#6B7280',
     margin: 0,
+  },
+  closeBtn: {
+    background: 'transparent',
+    border: 'none',
+    cursor: 'pointer',
+    color: '#6B7280',
+    padding: 8,
+    borderRadius: 8,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   nav: {
     flex: 1,
@@ -238,7 +317,8 @@ const styles = {
     width: '100%',
     display: 'flex',
     alignItems: 'center',
-    gap: 12,
+    justifyContent: 'center',
+    gap: 10,
     padding: '10px 16px',
     borderRadius: 10,
     border: 'none',
@@ -246,8 +326,32 @@ const styles = {
     cursor: 'pointer',
     fontSize: 14,
     fontFamily: "'Inter', system-ui, sans-serif",
-    fontWeight: 500,
+    fontWeight: 600,
     color: '#DC2626',
     transition: 'all 0.2s',
+  },
+  menuButton: {
+    position: 'fixed',
+    top: 16,
+    left: 16,
+    zIndex: 1001,
+    background: '#fff',
+    border: '1px solid #E5E7EB',
+    borderRadius: 10,
+    padding: 10,
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+  },
+  overlay: {
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    background: 'rgba(0,0,0,0.5)',
+    zIndex: 999,
   },
 };

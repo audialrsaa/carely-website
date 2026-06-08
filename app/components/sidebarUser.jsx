@@ -3,42 +3,102 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, AlertCircle, FileText, Settings, LogOut, Bell} from "lucide-react";
+import { LayoutDashboard, AlertCircle, FileText, LogOut, Bell, Menu, X, User } from "lucide-react";
 import Image from "next/image";
+import { useEffect, useState } from "react";
+import Swal from "sweetalert2";
+
+const API = "http://localhost:5000/api";
 
 export default function SidebarUser() {
   const pathname = usePathname();
   const router = useRouter();
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
   const menuItems = [
     { label: "Dashboard", href: "/users", icon: LayoutDashboard },
     { label: "Kasus Aktif", href: "/users/kasus-aktif", icon: AlertCircle },
     { label: "Riwayat Laporan", href: "/users/history", icon: FileText },
-    
-  { label: "Notifikasi", href: "/users/notifications", icon: Bell },
-    { label: "Pengaturan", href: "/users/settings", icon: Settings },
+    { label: "Notifikasi", href: "/users/notifications", icon: Bell, hasBadge: true },
+    { label: "Profile", href: "/users/settings", icon: User },
   ];
 
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    sessionStorage.removeItem("token");
-    sessionStorage.removeItem("user");
-    router.push("/login");
+  const fetchUnreadCount = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) return;
+
+      const res = await fetch(`${API}/notifications/unread-count`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!res.ok) return;
+
+      const data = await res.json();
+      setUnreadCount(data.total || 0);
+    } catch (err) {
+      console.error("Fetch unread count error:", err);
+    }
   };
 
-  return (
-    <aside style={styles.sidebar}>
+  useEffect(() => {
+    fetchUnreadCount();
+    const interval = setInterval(fetchUnreadCount, 5000);
+    return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+      if (window.innerWidth >= 768) {
+        setIsMobileMenuOpen(false);
+      }
+    };
+
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
+  const handleLogout = async () => {
+    const result = await Swal.fire({
+      title: "Keluar dari akun?",
+      text: "Kamu harus login kembali untuk mengakses aplikasi.",
+      icon: "question",
+      showCancelButton: true,
+      confirmButtonColor: "#DC2626",
+      cancelButtonColor: "#6B7280",
+      confirmButtonText: "Ya, Keluar",
+      cancelButtonText: "Batal",
+    });
+
+    if (result.isConfirmed) {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      sessionStorage.removeItem("token");
+      sessionStorage.removeItem("user");
+      router.push("/login");
+    }
+  };
+
+  const closeMenu = () => {
+    setIsMobileMenuOpen(false);
+  };
+
+  const SidebarContent = () => (
+    <>
       {/* Logo Section */}
       <div style={styles.logoSection}>
         <div style={styles.logoContainer}>
           <div style={styles.logoBox}>
-            <Image 
-              src="/images/logo.png" 
-              alt="Carely Logo" 
-              width={32} 
+            <Image
+              src="/images/logo.png"
+              alt="Carely Logo"
+              width={32}
               height={32}
-              style={{ objectFit: 'contain' }}
+              style={{ objectFit: "contain" }}
             />
           </div>
           <div>
@@ -46,6 +106,11 @@ export default function SidebarUser() {
             <p style={styles.logoSubtitle}>Safe Space to Speak</p>
           </div>
         </div>
+        {isMobile && (
+          <button onClick={closeMenu} style={styles.closeBtn}>
+            <X size={20} />
+          </button>
+        )}
       </div>
 
       {/* Navigation Menu */}
@@ -53,30 +118,35 @@ export default function SidebarUser() {
         {menuItems.map((item) => {
           const isActive = pathname === item.href;
           const Icon = item.icon;
-          
+
           return (
-            <Link key={item.href} href={item.href} style={styles.navLink}>
+            <Link key={item.href} href={item.href} onClick={closeMenu} style={styles.navLink}>
               <div
                 style={{
                   ...styles.navItem,
-                  background: isActive ? '#F3F4F6' : 'transparent',
-                  color: isActive ? '#2563EB' : '#4B5563',
+                  background: isActive ? "#F3F4F6" : "transparent",
+                  color: isActive ? "#2563EB" : "#4B5563",
                 }}
                 onMouseEnter={(e) => {
                   if (!isActive) {
-                    e.currentTarget.style.background = '#F9FAFB';
-                    e.currentTarget.style.color = '#2563EB';
+                    e.currentTarget.style.background = "#F9FAFB";
+                    e.currentTarget.style.color = "#2563EB";
                   }
                 }}
                 onMouseLeave={(e) => {
                   if (!isActive) {
-                    e.currentTarget.style.background = 'transparent';
-                    e.currentTarget.style.color = '#4B5563';
+                    e.currentTarget.style.background = "transparent";
+                    e.currentTarget.style.color = "#4B5563";
                   }
                 }}
               >
                 <Icon size={18} />
                 <span style={styles.navLabel}>{item.label}</span>
+                {item.hasBadge && unreadCount > 0 && (
+                  <span style={styles.badge}>
+                    {unreadCount > 99 ? "99+" : unreadCount}
+                  </span>
+                )}
               </div>
             </Link>
           );
@@ -88,113 +158,192 @@ export default function SidebarUser() {
         <button
           onClick={handleLogout}
           style={styles.logoutBtn}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = '#FEE2E2';
-            e.currentTarget.style.color = '#DC2626';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = '#FEF2F2';
-            e.currentTarget.style.color = '#DC2626';
-          }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = "#FEE2E2"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = "#FEF2F2"; }}
         >
           <LogOut size={18} />
           <span>Keluar</span>
         </button>
       </div>
-    </aside>
+    </>
+  );
+
+  const sidebarStyle = {
+    ...styles.sidebar,
+    ...(isMobile && {
+      position: "fixed",
+      left: 0,
+      top: 0,
+      transform: isMobileMenuOpen ? "translateX(0)" : "translateX(-100%)",
+      transition: "transform 0.3s ease",
+      zIndex: 1000,
+    }),
+  };
+
+  return (
+    <>
+      {/* Mobile Menu Button */}
+      {isMobile && (
+        <button
+          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          style={styles.menuButton}
+        >
+          <Menu size={24} />
+        </button>
+      )}
+
+      {/* Overlay untuk mobile */}
+      {isMobile && isMobileMenuOpen && (
+        <div style={styles.overlay} onClick={closeMenu} />
+      )}
+
+      {/* Sidebar */}
+      <aside style={sidebarStyle}>
+        <SidebarContent />
+      </aside>
+    </>
   );
 }
 
 const styles = {
   sidebar: {
     width: 260,
-    height: '100vh',
-    position: 'sticky',
-    top: 0,
-    background: '#fff',
-    borderRight: '1px solid #E5E7EB',
-    display: 'flex',
-    flexDirection: 'column',
+    height: "100vh",
+    background: "#fff",
+    borderRight: "1px solid #E5E7EB",
+    display: "flex",
+    flexDirection: "column",
     flexShrink: 0,
-    overflowY: 'auto',
+    overflowY: "auto",
   },
   logoSection: {
-    padding: '24px 20px',
-    borderBottom: '1px solid #E5E7EB',
+    padding: "24px 20px",
+    borderBottom: "1px solid #E5E7EB",
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
   },
   logoContainer: {
-    display: 'flex',
-    alignItems: 'center',
+    display: "flex",
+    alignItems: "center",
     gap: 12,
   },
   logoBox: {
     width: 40,
     height: 40,
     borderRadius: 10,
-    background: '#fff',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    boxShadow: '0 4px 10px rgba(0, 75, 141, 0.25)',
-    overflow: 'hidden',
+    background: "#fff",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    boxShadow: "0 4px 10px rgba(0, 75, 141, 0.25)",
+    overflow: "hidden",
   },
   logoTitle: {
     fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif",
     fontWeight: 700,
     fontSize: 18,
-    color: '#111827',
+    color: "#111827",
     margin: 0,
   },
   logoSubtitle: {
     fontFamily: "'Inter', system-ui, sans-serif",
     fontSize: 10,
-    color: '#6B7280',
+    color: "#6B7280",
     margin: 0,
+  },
+  closeBtn: {
+    background: "transparent",
+    border: "none",
+    cursor: "pointer",
+    color: "#6B7280",
+    padding: 8,
+    borderRadius: 8,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
   },
   nav: {
     flex: 1,
-    padding: '20px 16px',
-    display: 'flex',
-    flexDirection: 'column',
+    padding: "20px 16px",
+    display: "flex",
+    flexDirection: "column",
     gap: 4,
   },
   navLink: {
-    textDecoration: 'none',
+    textDecoration: "none",
   },
   navItem: {
-    display: 'flex',
-    alignItems: 'center',
+    display: "flex",
+    alignItems: "center",
     gap: 12,
-    padding: '10px 16px',
+    padding: "10px 16px",
     borderRadius: 10,
     fontSize: 14,
     fontFamily: "'Inter', system-ui, sans-serif",
     fontWeight: 500,
-    cursor: 'pointer',
-    transition: 'all 0.2s',
+    cursor: "pointer",
+    transition: "all 0.2s",
   },
   navLabel: {
     flex: 1,
   },
+  badge: {
+    background: "#EF4444",
+    color: "#fff",
+    minWidth: 20,
+    height: 20,
+    borderRadius: 9999,
+    fontSize: 11,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: "0 6px",
+    fontWeight: 600,
+  },
   logoutSection: {
-    padding: '20px',
-    borderTop: '1px solid #E5E7EB',
+    padding: "20px",
+    borderTop: "1px solid #E5E7EB",
   },
   logoutBtn: {
-    width: '100%',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
+    width: "100%",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
     gap: 10,
-    padding: '10px 16px',
+    padding: "10px 16px",
     borderRadius: 10,
-    border: 'none',
-    background: '#FEF2F2',
-    cursor: 'pointer',
+    border: "none",
+    background: "#FEF2F2",
+    cursor: "pointer",
     fontSize: 14,
     fontFamily: "'Inter', system-ui, sans-serif",
     fontWeight: 600,
-    color: '#DC2626',
-    transition: 'all 0.2s',
+    color: "#DC2626",
+    transition: "all 0.2s",
+  },
+  menuButton: {
+    position: "fixed",
+    top: 16,
+    left: 16,
+    zIndex: 1001,
+    background: "#fff",
+    border: "1px solid #E5E7EB",
+    borderRadius: 10,
+    padding: 10,
+    cursor: "pointer",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+  },
+  overlay: {
+    position: "fixed",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    background: "rgba(0,0,0,0.5)",
+    zIndex: 999,
   },
 };
